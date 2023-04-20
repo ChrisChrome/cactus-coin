@@ -1,0 +1,10 @@
+{
+	"discord": {
+		"token": "",
+		"errorChannel": "",
+		"levels": {
+			"lvlUpEquation": "Math.floor(5 / 6 * lvl * (2 * lvl * lvl + 27 * lvl + 91))",
+			"cooldownMinutes": 1
+		}
+	}
+}
