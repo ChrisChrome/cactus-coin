@@ -11,5 +11,10 @@
 				"required": false
 			}
 		]
+	},
+	{
+		"name": "leaderboard",
+		"description": "Get the top 10 users",
+		"type": 1
 	}
 ]

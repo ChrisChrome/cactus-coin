@@ -156,6 +156,35 @@ client.on("interactionCreate", async interaction => {
 				}
 			});
 			break;
+		case "leaderboard":
+			await db.all(`SELECT * FROM levels ORDER BY totalXp DESC`, async (err, rows) => {
+				if (err) {
+					console.error(err);
+				}
+				if (!rows) return interaction.reply({
+					content: "No one has sent any messages yet.",
+					ephemeral: true
+				});
+				if (rows) {
+					let leaderboard = [];
+					// Top 10
+					for (let i = 0; i < 10; i++) {
+						if (rows[i]) {
+							let user = await client.users.fetch(rows[i].id);
+							let lvl = rows[i].lvl;
+							leaderboard.push(`${i + 1}. <@${user.id}> - Level ${rows[i].lvl} - ${rows[i].totalXp} XP - ${rows[i].msgCount} Messages`);
+						}
+					}
+					interaction.reply({
+						embeds: [{
+							title: "Leaderboard",
+							description: leaderboard.join("\n"),
+							color: 0x00ff00
+						}]
+					});
+				}
+			});
+			break;
 	};
 });
 
