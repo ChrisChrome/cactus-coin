@@ -172,12 +172,7 @@ client.on("interactionCreate", async interaction => {
 						if (rows[i]) {
 							let user = await client.users.fetch(rows[i].id);
 							let lvl = rows[i].lvl;
-							let nextLvl = eval(config.discord.levels.lvlUpEquation)
-							let xp = rows[i].xp;
-							// calculate percentage
-							let percentage = Math.floor((xp / nextLvl) * 100);
-
-							leaderboard.push(`${i + 1}. <@${user.id}> - Level ${rows[i].lvl} - %${percentage} to level ${lvl + 1} - ${rows[i].totalXp} XP - ${rows[i].msgCount} Messages`);
+							leaderboard.push(`${i + 1}. <@${user.id}> - ${rows[i].xp}/${eval(config.discord.levels.lvlUpEquation)} L${rows[i].lvl} - ${rows[i].totalXp} XP - ${rows[i].msgCount} Messages`);
 						}
 					}
 					interaction.reply({
