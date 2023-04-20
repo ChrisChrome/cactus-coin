@@ -1,0 +1,15 @@
+[
+	{
+		"name": "rank",
+		"description": "Get your rank",
+		"type": 1,
+		"options": [
+			{
+				"name": "user",
+				"description": "The user you want to get the rank of",
+				"type": 6,
+				"required": false
+			}
+		]
+	}
+]
