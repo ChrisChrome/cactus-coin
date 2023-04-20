@@ -140,32 +140,53 @@ client.on("interactionCreate", async interaction => {
 				if (row) {
 					var data = row;
 					let lvl = data.lvl;
-					interaction.reply({
-						embeds: [{
-							title: `${user.tag}'s Rank`,
-							fields: [{
-									name: "Level",
-									value: data.lvl,
-									inline: true
-								},
-								{
-									name: "XP",
-									value: `${data.xp}/${eval(config.discord.levels.lvlUpEquation)}`,
-								},
-								{
-									name: "Total XP",
-									value: data.totalXp,
-									inline: true
-								},
-								{
-									name: "Messages Sent",
-									value: data.msgCount,
-									inline: true
+					let rank;
+					// Calculate rank
+					await db.all(`SELECT * FROM levels ORDER BY totalXp DESC`, async (err, rows) => {
+						if (err) {
+							console.error(err);
+						}
+						if (rows) {
+							let rank = 0;
+							for (let i = 0; i < rows.length; i++) {
+								if (rows[i].id === user.id) {
+									rank = i + 1;
+									break;
 								}
-							],
-							color: 0x00ff00
-						}]
-					})
+							}
+							interaction.reply({
+								embeds: [{
+									title: `${user.tag}'s Rank`,
+									fields: [{
+											name: "Rank",
+											value: `#${rank}`,
+											inline: true
+										},
+										{
+											name: "Level",
+											value: data.lvl,
+											inline: true
+										},
+										{
+											name: "XP",
+											value: `${data.xp}/${eval(config.discord.levels.lvlUpEquation)}`,
+										},
+										{
+											name: "Total XP",
+											value: data.totalXp,
+											inline: true
+										},
+										{
+											name: "Messages Sent",
+											value: data.msgCount,
+											inline: true
+										}
+									],
+									color: 0x00ff00
+								}]
+							})
+						}
+					});
 				}
 			});
 			break;
@@ -199,63 +220,62 @@ client.on("interactionCreate", async interaction => {
 			});
 			break;
 
-			case "givexp":
-				// Dont gotta check perms, done on discord
-				// Dont gotta check arguments, done on discord
+		case "givexp":
+			// Dont gotta check perms, done on discord
+			// Dont gotta check arguments, done on discord
 
-				// Get user data
-				await db.get(`SELECT * FROM levels WHERE id = '${interaction.options.getUser("user").id}'`, async (err, row) => {
-					if (err) {
-						console.error(err);
-					}
-					if (!row) {
-						await db.run(`INSERT INTO levels (id, xp, lvl, totalXp, msgCount) VALUES ('${interaction.options.getUser("user").id}', ${interaction.options.getInteger("amount")}, 1, ${interaction.options.getInteger("amount")}, 0)`);
-						// Run level up equation
-						var lvl = 1;
-						let lvlUpXp = eval(config.discord.levels.lvlUpEquation);
+			// Get user data
+			await db.get(`SELECT * FROM levels WHERE id = '${interaction.options.getUser("user").id}'`, async (err, row) => {
+				if (err) {
+					console.error(err);
+				}
+				if (!row) {
+					await db.run(`INSERT INTO levels (id, xp, lvl, totalXp, msgCount) VALUES ('${interaction.options.getUser("user").id}', ${interaction.options.getInteger("amount")}, 1, ${interaction.options.getInteger("amount")}, 0)`);
+					// Run level up equation
+					var lvl = 1;
+					let lvlUpXp = eval(config.discord.levels.lvlUpEquation);
 
-						// Keep running level up equation until xp is less than the calculated level up xp
-						while (interaction.options.getInteger("amount") >= lvlUpXp) {
-							lvl++;
-							interaction.options.getInteger("amount") -= lvlUpXp;
-							lvlUpXp = eval(config.discord.levels.lvlUpEquation);
-							interaction.channel.send(`${interaction.options.getUser("user")}, you have leveled up to level ${lvl}!`).then(msg => {
-								setTimeout(() => {
-									msg.delete();
-								}, 10000);
-							});
-						}
-						return;
-					}
-					if (row) {
-						var data = row;
-						let lvl = data.lvl;
-						data.xp += interaction.options.getInteger("amount");
-						data.totalXp += interaction.options.getInteger("amount");
-						// If user is in database, and xp is greater than or equal to the calculated level up XP, add 1 to lvl and add the remainder to xp
-						let lvlUpXp = eval(config.discord.levels.lvlUpEquation);
-
-						// Keep running level up equation until xp is less than the calculated level up xp
-						while (data.xp >= lvlUpXp) {
-							data.lvl++;
-							data.xp -= lvlUpXp;
-							lvlUpXp = eval(config.discord.levels.lvlUpEquation);
-							interaction.channel.send(`${interaction.options.getUser("user")}, you have leveled up to level ${data.lvl}!`).then(msg => {
-								setTimeout(() => {
-									msg.delete();
-								}, 10000);
-							});
-						}
-
-						// Update database
-						await db.run(`UPDATE levels SET xp = ${data.xp}, lvl = ${data.lvl}, totalXp = ${data.totalXp}, msgCount = ${data.msgCount} WHERE id = '${interaction.options.getUser("user").id}'`);
-						interaction.reply({
-							content: `Gave ${interaction.options.getInteger("amount")} XP to ${interaction.options.getUser("user").tag}!`,
-							ephemeral: true
+					// Keep running level up equation until xp is less than the calculated level up xp
+					while (interaction.options.getInteger("amount") >= lvlUpXp) {
+						lvl++;
+						interaction.options.getInteger("amount") -= lvlUpXp;
+						lvlUpXp = eval(config.discord.levels.lvlUpEquation);
+						interaction.channel.send(`${interaction.options.getUser("user")}, you have leveled up to level ${lvl}!`).then(msg => {
+							setTimeout(() => {
+								msg.delete();
+							}, 10000);
 						});
 					}
+					return;
 				}
-			);
+				if (row) {
+					var data = row;
+					let lvl = data.lvl;
+					data.xp += interaction.options.getInteger("amount");
+					data.totalXp += interaction.options.getInteger("amount");
+					// If user is in database, and xp is greater than or equal to the calculated level up XP, add 1 to lvl and add the remainder to xp
+					let lvlUpXp = eval(config.discord.levels.lvlUpEquation);
+
+					// Keep running level up equation until xp is less than the calculated level up xp
+					while (data.xp >= lvlUpXp) {
+						data.lvl++;
+						data.xp -= lvlUpXp;
+						lvlUpXp = eval(config.discord.levels.lvlUpEquation);
+						interaction.channel.send(`${interaction.options.getUser("user")}, you have leveled up to level ${data.lvl}!`).then(msg => {
+							setTimeout(() => {
+								msg.delete();
+							}, 10000);
+						});
+					}
+
+					// Update database
+					await db.run(`UPDATE levels SET xp = ${data.xp}, lvl = ${data.lvl}, totalXp = ${data.totalXp}, msgCount = ${data.msgCount} WHERE id = '${interaction.options.getUser("user").id}'`);
+					interaction.reply({
+						content: `Gave ${interaction.options.getInteger("amount")} XP to ${interaction.options.getUser("user").tag}!`,
+						ephemeral: true
+					});
+				}
+			});
 			break;
 	};
 });
