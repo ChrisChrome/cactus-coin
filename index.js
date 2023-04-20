@@ -111,7 +111,7 @@ client.on("interactionCreate", async interaction => {
 		case "rank":
 			var user;
 			if (interaction.options.getMember("user")) {
-				user = interaction.options.getMember("user");
+				user = interaction.options.getMember("user").user;
 			} else {
 				user = interaction.user;
 			}
