@@ -36,5 +36,25 @@
 				"required": true
 			}
 		]
+	},
+	{
+		"name": "removexp",
+		"description": "Remove XP from a user",
+		"type": 1,
+		"default_member_permissions": 0,
+		"options": [
+			{
+				"name": "user",
+				"description": "The user you want to remove XP from",
+				"type": 6,
+				"required": true
+			},
+			{
+				"name": "amount",
+				"description": "The amount of XP you want to remove",
+				"type": 4,
+				"required": true
+			}
+		]
 	}
 ]

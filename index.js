@@ -94,22 +94,13 @@ client.on("messageCreate", async message => {
 				data.lvl++;
 				data.xp -= lvlUpXp;
 				lvlUpXp = eval(config.discord.levels.lvlUpEquation);
-				message.channel.send(`${message.author}, you have leveled up to level ${data.lvl}!`).then(msg => {
+				// use config.discord.levels.lvlUpMessage to send a message when the user levels up
+				message.channel.send(config.discord.levels.lvlUpMessage.replace("{user}", message.author).replace("{lvl}", data.lvl)).then(msg => {
 					setTimeout(() => {
 						msg.delete();
 					}, 10000);
 				});
 			}
-
-			// if (data.xp >= lvlUpXp) {
-			// 	data.lvl++;
-			// 	data.xp -= lvlUpXp;
-			// 	message.channel.send(`${message.author}, you have leveled up to level ${data.lvl}!`).then(msg => {
-			// 		setTimeout(() => {
-			// 			msg.delete();
-			// 		}, 10000);
-			// 	});
-			// }
 
 			// Update database
 			await db.run(`UPDATE levels SET xp = ${data.xp}, lvl = ${data.lvl}, totalXp = ${data.totalXp}, msgCount = ${data.msgCount} WHERE id = '${message.author.id}'`);
@@ -229,25 +220,7 @@ client.on("interactionCreate", async interaction => {
 				if (err) {
 					console.error(err);
 				}
-				if (!row) {
-					await db.run(`INSERT INTO levels (id, xp, lvl, totalXp, msgCount) VALUES ('${interaction.options.getUser("user").id}', ${interaction.options.getInteger("amount")}, 1, ${interaction.options.getInteger("amount")}, 0)`);
-					// Run level up equation
-					var lvl = 1;
-					let lvlUpXp = eval(config.discord.levels.lvlUpEquation);
-
-					// Keep running level up equation until xp is less than the calculated level up xp
-					while (interaction.options.getInteger("amount") >= lvlUpXp) {
-						lvl++;
-						interaction.options.getInteger("amount") -= lvlUpXp;
-						lvlUpXp = eval(config.discord.levels.lvlUpEquation);
-						interaction.channel.send(`${interaction.options.getUser("user")}, you have leveled up to level ${lvl}!`).then(msg => {
-							setTimeout(() => {
-								msg.delete();
-							}, 10000);
-						});
-					}
-					return;
-				}
+				if (!row) return interaction.reply({ content: "This user has not sent any messages yet.", ephemeral: true });
 				if (row) {
 					var data = row;
 					let lvl = data.lvl;
@@ -261,11 +234,6 @@ client.on("interactionCreate", async interaction => {
 						data.lvl++;
 						data.xp -= lvlUpXp;
 						lvlUpXp = eval(config.discord.levels.lvlUpEquation);
-						interaction.channel.send(`${interaction.options.getUser("user")}, you have leveled up to level ${data.lvl}!`).then(msg => {
-							setTimeout(() => {
-								msg.delete();
-							}, 10000);
-						});
 					}
 
 					// Update database
@@ -293,7 +261,6 @@ process.on('SIGINT', async () => {
 });
 
 // Global error handler
-/*
 process.on('uncaughtException', async (error) => {
 	await console.error(`${colors.red("[ERROR]")} Uncaught Exception: ${error}`);
 	if (client.user.tag) {
@@ -306,16 +273,8 @@ process.on('uncaughtException', async (error) => {
 				}]
 			});
 		});
-		await client.user.setPresence({
-			status: "invisible",
-			activities: []
-		});
-		await client.destroy();
 	}
-	await process.exit(1);
 });
-
-*/
 // Global Variables
 var cooldowns = {};
 
