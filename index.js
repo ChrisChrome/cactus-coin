@@ -95,7 +95,7 @@ client.on("messageCreate", async message => {
 				data.xp -= lvlUpXp;
 				lvlUpXp = eval(config.discord.levels.lvlUpEquation);
 				// use config.discord.levels.lvlUpMessage to send a message when the user levels up
-				message.channel.send(config.discord.levels.lvlUpMessage.replace("{user}", message.author).replace("{lvl}", data.lvl)).then(msg => {
+				message.channel.send(config.discord.levels.lvlUpMessage.replace("{user}", `<@${message.author.id}>`).replace("{lvl}", data.lvl)).then(msg => {
 					setTimeout(() => {
 						msg.delete();
 					}, 10000);
