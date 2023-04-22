@@ -56,7 +56,9 @@ client.on("ready", async () => {
 client.on("messageCreate", async message => {
 	if (message.author.bot) return;
 	if (message.channel.type === "DM") return;
-
+	if (config.discord.levels.blacklist.includes(message.channel.id)) return;
+	if (config.discord.levels.blacklist.includes(message.channel.parentId)) return;
+	
 	// Calculate random xp
 	let xp = Math.floor(Math.random() * 10) + 15;
 	// If user is not in database, add them, {user: {xp = xp, lvl = 1, totalXp: xp, msgCount = 1}}

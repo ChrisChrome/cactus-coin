@@ -3,9 +3,10 @@
 		"token": "",
 		"errorChannel": "",
 		"levels": {
-			"lvlUpEquation": "30",
+			"lvlUpEquation": "5 * (lvl ^ 2) + (50 * lvl) + 100",
 			"lvlUpMessage": "{user}, you have leveled up to level {lvl}!",
-			"cooldownMinutes": 1
+			"cooldownMinutes": 1,
+			"blacklist": []
 		}
 	}
 }
