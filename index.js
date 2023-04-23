@@ -1,5 +1,6 @@
 const config = require("./config.json");
 const Discord = require("discord.js");
+const express = require("express");
 const rest = new Discord.REST({
 	version: '10'
 }).setToken(config.discord.token);
@@ -13,6 +14,8 @@ const client = new Discord.Client({
 		"Guilds"
 	]
 });
+
+const app = express();
 
 // Use sqlite3 for object storage, and create a database if it doesn't exist
 const sqlite3 = require("sqlite3").verbose();
@@ -250,6 +253,36 @@ client.on("interactionCreate", async interaction => {
 	};
 });
 
+
+app.get("/api/levels", async (req, res) => {
+	// Pretty much send the entire database
+	await db.all(`SELECT * FROM levels ORDER BY totalXp DESC`, async (err, rows) => {
+		if (err) {
+			console.error(err);
+			return res.sendStatus(500); // Internal server error
+		}
+		if (!rows) return res.sendStatus(204) // No content
+		if (rows) {
+			return res.json(rows);
+		}
+	});
+});
+
+app.get("/api/levels/:id", async (req, res) => {
+	// Get user data
+	await db.get(`SELECT * FROM levels WHERE id = '${req.params.id}'`, async (err, row) => {
+		if (err) {
+			console.error(err);
+			return res.sendStatus(500); // Internal server error
+		}
+		if (!row) return res.sendStatus(404) // Not found
+		if (row) {
+			return res.json(row);
+		}
+	});
+});
+
+
 // Handle SIGINT gracefully
 process.on('SIGINT', async () => {
 	await console.log(`${colors.cyan("[INFO]")} Stop received, exiting...`);
@@ -277,6 +310,14 @@ process.on('uncaughtException', async (error) => {
 		});
 	}
 });
+
+if (config.api.enabled) {
+	// Start API
+	app.listen(config.api.port, () => {
+		console.log(`${colors.cyan("[INFO]")} API listening on port ${config.api.port}`);
+	});
+}
+
 // Global Variables
 var cooldowns = {};
 

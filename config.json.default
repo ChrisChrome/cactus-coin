@@ -8,5 +8,9 @@
 			"cooldownMinutes": 1,
 			"blacklist": []
 		}
+	},
+	"api": {
+		"port": 8080,
+		"enabled": false
 	}
 }
