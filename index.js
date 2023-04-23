@@ -22,7 +22,16 @@ const sqlite3 = require("sqlite3").verbose();
 const db = new sqlite3.Database("./levels.db");
 
 // Create table if it doesn't exist
-db.run("CREATE TABLE IF NOT EXISTS levels (id TEXT, xp INTEGER, lvl INTEGER, totalXp INTEGER, msgCount INTEGER)");
+db.run("CREATE TABLE IF NOT EXISTS levels (id TEXT, xp INTEGER, lvl INTEGER, totalXp INTEGER, msgCount INTEGER, tag TEXT)");
+// update table if it does exist
+// Check if tag column exists in the levels table
+db.all("PRAGMA table_info(levels)", async (err, rows) => {
+	// Check if tag column exists
+	if (rows.filter(row => row.name === "tag").length === 0) {
+		// Add tag column
+		await db.run("ALTER TABLE levels ADD COLUMN tag TEXT");
+	}
+});
 
 client.on("ready", async () => {
 	console.log(`${colors.cyan("[INFO]")} Logged in as ${colors.green(client.user.tag)}`)
@@ -70,7 +79,7 @@ client.on("messageCreate", async message => {
 			console.error(err);
 		}
 		if (!row) {
-			await db.run(`INSERT INTO levels (id, xp, lvl, totalXp, msgCount) VALUES ('${message.author.id}', ${xp}, 1, ${xp}, 1)`); // Add user to database
+			await db.run(`INSERT INTO levels (id, xp, lvl, totalXp, msgCount, tag) VALUES ('${message.author.id}', ${xp}, 1, ${xp}, 1, '${message.author.tag}')`); // Add user to database
 		}
 	});
 
@@ -108,7 +117,7 @@ client.on("messageCreate", async message => {
 			}
 
 			// Update database
-			await db.run(`UPDATE levels SET xp = ${data.xp}, lvl = ${data.lvl}, totalXp = ${data.totalXp}, msgCount = ${data.msgCount} WHERE id = '${message.author.id}'`);
+			await db.run(`UPDATE levels SET xp = ${data.xp}, lvl = ${data.lvl}, totalXp = ${data.totalXp}, msgCount = ${data.msgCount}, tag = '${message.author.tag}' WHERE id = '${message.author.id}'`);
 		}
 	});
 
@@ -263,13 +272,8 @@ app.get("/api/levels", async (req, res) => {
 		}
 		if (!rows) return res.sendStatus(204) // No content
 		if (rows) {
-			let output = [];
-			// loop through rows, look up user tag from id, add it to the object, then push it to the output array
-			for (let i = 0; i < rows.length; i++) {
-				let user = await client.users.fetch(rows[i].id);
-				rows[i].tag = user.tag;
-				output.push(rows[i]);
-			}
+			let output = row;
+			if (!output.tag) output.tag = "Unknown#0000";
 			return res.json(output);
 		}
 	});
@@ -284,7 +288,9 @@ app.get("/api/levels/:id", async (req, res) => {
 		}
 		if (!row) return res.sendStatus(404) // Not found
 		if (row) {
-			return res.json(row);
+			let output = row;
+			if (!output.tag) output.tag = "Unknown#0000";
+			return res.json(output);
 		}
 	});
 });
@@ -303,7 +309,7 @@ process.on('SIGINT', async () => {
 });
 
 // Global error handler
-process.on('uncaughtException', async (error) => {
+/*process.on('uncaughtException', async (error) => {
 	await console.error(`${colors.red("[ERROR]")} Uncaught Exception: ${error}`);
 	if (client.user.tag) {
 		client.channels.fetch(config.discord.errorChannel).then(async channel => {
@@ -316,7 +322,7 @@ process.on('uncaughtException', async (error) => {
 			});
 		});
 	}
-});
+});*/
 
 if (config.api.enabled) {
 	// Start API
