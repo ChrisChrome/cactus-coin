@@ -62,6 +62,12 @@ client.on("ready", async () => {
 
 	// Log startup time in seconds
 	console.log(`${colors.cyan("[INFO]")} Startup took ${colors.green((Date.now() - initTime) / 1000)} seconds.`)
+
+	// Start fetching user profiles
+	let memStart = Date.now();
+	await client.guilds.cache.get(config.discord.guildID).members.fetch().then(async members => {
+		console.log(`${colors.cyan("[INFO]")} Fetched ${colors.green(members.size)} members. Took ${colors.green((Date.now() - memStart) / 1000)} seconds.`)
+	});
 });
 
 
@@ -276,14 +282,13 @@ app.get("/api/levels", async (req, res) => {
 		if (!rows) return res.sendStatus(204) // No content
 		if (rows) {
 			let output = rows;
-			for (let i = 0; i < output.length; i++) {
+			output.forEach((row, i) => {
 				// Get user info {avatar, tag, etc}
-				let user = await client.users.cache.get(output[i].id);
+				let user = client.guilds.cache.get(config.discord.guildID).members.cache.get(output[i].id).user;
 				output[i].tag = user.tag;
 				output[i].avatar = user.displayAvatarURL({extension: "png", size: 1024});
 				output[i].banner = user.bannerURL({extension: "png"});
-				if (!output[i].tag) output[i].tag = "Unknown#0000";
-			}
+			});
 			return res.json(output);
 		}
 	});
