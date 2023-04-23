@@ -70,7 +70,7 @@ client.on("messageCreate", async message => {
 	if (message.channel.type === "DM") return;
 	if (config.discord.levels.blacklist.includes(message.channel.id)) return;
 	if (config.discord.levels.blacklist.includes(message.channel.parentId)) return;
-	
+
 	// Calculate random xp
 	let xp = Math.floor(Math.random() * 10) + 15;
 	// If user is not in database, add them, {user: {xp = xp, lvl = 1, totalXp: xp, msgCount = 1}}
@@ -234,7 +234,10 @@ client.on("interactionCreate", async interaction => {
 				if (err) {
 					console.error(err);
 				}
-				if (!row) return interaction.reply({ content: "This user has not sent any messages yet.", ephemeral: true });
+				if (!row) return interaction.reply({
+					content: "This user has not sent any messages yet.",
+					ephemeral: true
+				});
 				if (row) {
 					var data = row;
 					let lvl = data.lvl;
