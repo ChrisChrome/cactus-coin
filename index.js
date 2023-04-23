@@ -278,7 +278,7 @@ app.get("/api/levels", async (req, res) => {
 			let output = rows;
 			for (let i = 0; i < output.length; i++) {
 				// Get user info {avatar, tag, etc}
-				let user = await client.users.fetch(output[i].id);
+				let user = await client.users.cache.get(output[i].id);
 				output[i].tag = user.tag;
 				output[i].avatar = user.displayAvatarURL({extension: "png", size: 1024});
 				output[i].banner = user.bannerURL({extension: "png"});
