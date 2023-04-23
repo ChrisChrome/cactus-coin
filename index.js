@@ -288,7 +288,7 @@ app.get("/api/levels/:id", async (req, res) => {
 		}
 		if (!row) return res.sendStatus(404) // Not found
 		if (row) {
-			let output = rows;
+			let output = row;
 			if (!output.tag) output.tag = "Unknown#0000";
 			return res.json(output);
 		}
