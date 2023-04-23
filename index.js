@@ -276,7 +276,14 @@ app.get("/api/levels", async (req, res) => {
 		if (!rows) return res.sendStatus(204) // No content
 		if (rows) {
 			let output = rows;
-			if (!output.tag) output.tag = "Unknown#0000";
+			for (let i = 0; i < output.length; i++) {
+				// Get user info {avatar, tag, etc}
+				let user = await client.users.fetch(output[i].id);
+				output[i].tag = user.tag;
+				output[i].avatar = user.displayAvatarURL({extension: "png", size: 1024});
+				output[i].banner = user.bannerURL({extension: "png"});
+				if (!output[i].tag) output[i].tag = "Unknown#0000";
+			}
 			return res.json(output);
 		}
 	});
@@ -292,6 +299,11 @@ app.get("/api/levels/:id", async (req, res) => {
 		if (!row) return res.sendStatus(404) // Not found
 		if (row) {
 			let output = row;
+			// Get user info {avatar, tag, etc}
+			let user = await client.users.fetch(req.params.id);
+			output.tag = user.tag;
+			output.avatar = user.displayAvatarURL({extension: "png", size: 1024});
+			output.banner = user.bannerURL({extension: "png"});
 			if (!output.tag) output.tag = "Unknown#0000";
 			return res.json(output);
 		}
