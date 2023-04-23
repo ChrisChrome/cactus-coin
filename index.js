@@ -263,7 +263,14 @@ app.get("/api/levels", async (req, res) => {
 		}
 		if (!rows) return res.sendStatus(204) // No content
 		if (rows) {
-			return res.json(rows);
+			let output = [];
+			// loop through rows, look up user tag from id, add it to the object, then push it to the output array
+			for (let i = 0; i < rows.length; i++) {
+				let user = await client.users.fetch(rows[i].id);
+				rows[i].tag = user.tag;
+				output.push(rows[i]);
+			}
+			return res.json(output);
 		}
 	});
 });
