@@ -285,6 +285,7 @@ app.get("/api/levels", async (req, res) => {
 			output.forEach((row, i) => {
 				// Get user info {avatar, tag, etc}
 				let user = client.guilds.cache.get(config.discord.guildID).members.cache.get(output[i].id).user;
+				if (!user) return res.json(output)
 				output[i].tag = user.tag;
 				output[i].avatar = user.displayAvatarURL({extension: "png", size: 1024});
 				output[i].banner = user.bannerURL({extension: "png"});
