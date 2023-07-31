@@ -153,7 +153,7 @@ client.on("interactionCreate", async interaction => {
 				interaction.options.getMember("user").user.send({
 					embeds: [{
 						title: "Coins Modified",
-						description: `${config.discord.coin} ${interaction.options.getNumber("amount")}}`,
+						description: `${config.discord.coin} ${interaction.options.getNumber("amount")}`,
 						color: 0xFFff00
 					}]
 				});
