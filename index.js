@@ -96,7 +96,7 @@ client.on("interactionCreate", async interaction => {
 					interaction.reply({
 						embeds: [{
 							title: `${user.username}'s Coins`,
-							description: `${config.discord.coin} ${data.points}`,
+							description: `${config.discord.coin}${data.points}`,
 						}]
 					});
 				}
@@ -260,7 +260,7 @@ client.on("interactionCreate", async interaction => {
 						let ledger = [];
 						for (let i = 0; i < rows.length; i++) {
 							let user = await client.users.fetch(rows[i].id);
-							ledger.push(`${user.username} - ${config.discord.coin}${rows[i].points}`);
+							ledger.push(`${user.username} - ${rows[i].points}`);
 						}
 						interaction.reply({
 							embeds: [{
