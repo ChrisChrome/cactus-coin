@@ -138,15 +138,6 @@ client.on("interactionCreate", async interaction => {
 				content: "You do not have permission to use this command.",
 				ephemeral: true
 			});
-			// check if the arguments are there
-			if (!interaction.options.getMember("user")) return interaction.reply({
-				content: "You must specify a user.",
-				ephemeral: true
-			});
-			if (!interaction.options.getNumber("amount")) return interaction.reply({
-				content: "You must specify an amount.",
-				ephemeral: true
-			});
 			let outputStatus = await checkAndModifyPoints(interaction.options.getMember("user").user, interaction.options.getNumber("amount"), interaction.options.getBoolean("override") || false);
 			if (outputStatus !== false) {
 				interaction.reply({
