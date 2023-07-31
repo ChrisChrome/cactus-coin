@@ -149,6 +149,16 @@ client.on("interactionCreate", async interaction => {
 					content: `Gave ${interaction.options.getMember("user").user.username} ${interaction.options.getNumber("amount")} coins.`,
 					ephemeral: true
 				});
+				// Tell the user their coins were modified
+				interaction.options.getMember("user").user.send({
+					embeds: [{
+						title: "Coins Modified",
+						description: `${config.discord.coin} ${interaction.options.getNumber("amount")}}`,
+						color: 0xFFff00
+					}]
+				});
+
+
 			} else {
 				interaction.reply({
 					content: `An error occurred.\n`,
@@ -211,6 +221,22 @@ client.on("interactionCreate", async interaction => {
 							description: `You sent ${interaction.options.getNumber("amount")} coins to ${interaction.options.getMember("user").user.username}.`
 						}]
 					});
+					// Tell the user being transferred from about the change as a sort of receipt
+					interaction.options.getMember("user").user.send({
+						embeds: [{
+							title: "Transfer Receipt",
+							color: 0xffff00,
+							description: `You received ${Math.floor(interaction.options.getNumber("amount"))} coins from ${interaction.user}.`
+						}]
+					});
+					interaction.user.send({
+						embeds: [{
+							title: "Transfer Receipt",
+							color: 0xffff00,
+							description: `You sent ${interaction.options.getNumber("amount")} coins to ${interaction.options.getMember("user").user}.`
+						}]
+					})
+
 				}
 			});
 			break;
