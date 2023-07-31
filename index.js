@@ -114,7 +114,7 @@ client.on("interactionCreate", async interaction => {
 						if (rows[i]) {
 							let user = await client.users.fetch(rows[i].id);
 							let lvl = rows[i].lvl;
-							leaderboard.push(`${i + 1}. <@${user.id}> - ${rows[i].points}`);
+							leaderboard.push(`${i + 1}. <@${user.id}> - ${config.discord.coin}${rows[i].points}`);
 						}
 					}
 					interaction.reply({
@@ -161,7 +161,7 @@ client.on("interactionCreate", async interaction => {
 				interaction.options.getMember("user").user.send({
 					embeds: [{
 						title: "Coins Modified",
-						description: `${config.discord.coin} ${amount}`,
+						description: `${config.discord.coin}${amount}`,
 						color: 0xFFff00
 					}]
 				});
@@ -226,7 +226,7 @@ client.on("interactionCreate", async interaction => {
 						embeds: [{
 							title: "Transfer Successful",
 							color: 0x00ff00,
-							description: `You sent ${interaction.options.getNumber("amount")} coins to ${interaction.options.getMember("user").user.username}.`
+							description: `You sent ${config.discord.coin}${interaction.options.getNumber("amount")} to ${interaction.options.getMember("user").user.username}.`
 						}]
 					});
 					// Tell the user being transferred from about the change as a sort of receipt
@@ -234,14 +234,14 @@ client.on("interactionCreate", async interaction => {
 						embeds: [{
 							title: "Transfer Receipt",
 							color: 0xffff00,
-							description: `You received ${Math.floor(interaction.options.getNumber("amount"))} coins from ${interaction.user}.`
+							description: `You received ${config.discord.coin}${Math.floor(interaction.options.getNumber("amount"))} from ${interaction.user}.`
 						}]
 					});
 					interaction.user.send({
 						embeds: [{
 							title: "Transfer Receipt",
 							color: 0xffff00,
-							description: `You sent ${interaction.options.getNumber("amount")} coins to ${interaction.options.getMember("user").user}.\nYou paid a tax of ${Math.floor(interaction.options.getNumber("amount"))} coins.`
+							description: `You sent ${config.discord.coin}${interaction.options.getNumber("amount")} to ${interaction.options.getMember("user").user}.\nYou paid a tax of ${config.discord.coin}${Math.floor(interaction.options.getNumber("amount"))}.`
 						}]
 					})
 
