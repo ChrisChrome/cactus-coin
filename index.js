@@ -22,6 +22,18 @@ const db = new sqlite3.Database("./database.db");
 db.run("CREATE TABLE IF NOT EXISTS points (id TEXT, points INTEGER)");
 // update table if it does exist
 
+const updateRoles = () => {
+	// Get all users in the database
+	db.all(`SELECT * FROM points`, async (err, rows) => {
+		// Add the config.discord.role to the user, regardless of points, its just a placeholder
+		for (let i = 0; i < rows.length; i++) {
+			let user = await client.users.fetch(rows[i].id);
+			let member = await client.guilds.cache.get(config.discord.guild).members.fetch(user);
+			member.roles.add(config.discord.role);
+		}
+	});
+}
+
 client.on("ready", async () => {
 	console.log(`${colors.cyan("[INFO]")} Logged in as ${colors.green(client.user.tag)}`)
 	// Load Commands
@@ -42,6 +54,9 @@ client.on("ready", async () => {
 		}
 	})();
 
+	// Every 5 minutes, update the roles
+	setInterval(updateRoles, 300000);
+	updateRoles();
 	// Log startup time in seconds
 	console.log(`${colors.cyan("[INFO]")} Startup took ${colors.green((Date.now() - initTime) / 1000)} seconds.`)
 });
