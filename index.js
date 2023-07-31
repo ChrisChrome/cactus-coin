@@ -243,6 +243,35 @@ client.on("interactionCreate", async interaction => {
 				}
 			});
 			break;
+			case "ledger": // Allows a user to see the balance of every user in the database
+				db.all(`SELECT * FROM points`, async (err, rows) => {
+					if (err) {
+						console.error(err);
+						return interaction.reply({
+							content: "An error occurred.",
+							ephemeral: true
+						});
+					}
+					if (!rows) return interaction.reply({
+						content: "It's quiet here...",
+						ephemeral: true
+					});
+					if (rows) {
+						let ledger = [];
+						for (let i = 0; i < rows.length; i++) {
+							let user = await client.users.fetch(rows[i].id);
+							ledger.push(`${user.username} - ${config.discord.coin}${rows[i].points}`);
+						}
+						interaction.reply({
+							embeds: [{
+								title: "Ledger",
+								description: ledger.join("\n"),
+								color: 0x00ff00
+							}]
+						});
+					}
+				});
+				break;
 	};
 });
 

@@ -73,5 +73,10 @@
 				"required": false
 			}
 		]
+	},
+	{
+		"name": "ledger",
+		"description": "Check the balance of every user",
+		"type": 1
 	}
 ]
