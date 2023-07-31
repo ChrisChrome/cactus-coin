@@ -136,3 +136,4 @@ config.json.disabled
 !.ssh/.gitkeep
 testing/
 levels.db
+database.db

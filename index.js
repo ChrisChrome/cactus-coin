@@ -1,6 +1,5 @@
 const config = require("./config.json");
 const Discord = require("discord.js");
-const express = require("express");
 const rest = new Discord.REST({
 	version: '10'
 }).setToken(config.discord.token);
@@ -9,29 +8,19 @@ const path = require("path");
 const colors = require("colors");
 const client = new Discord.Client({
 	intents: [
-		"GuildMessages",
 		"GuildMembers",
 		"Guilds"
 	]
 });
 
-const app = express();
 
 // Use sqlite3 for object storage, and create a database if it doesn't exist
 const sqlite3 = require("sqlite3").verbose();
-const db = new sqlite3.Database("./levels.db");
+const db = new sqlite3.Database("./database.db");
 
 // Create table if it doesn't exist
-db.run("CREATE TABLE IF NOT EXISTS levels (id TEXT, xp INTEGER, lvl INTEGER, totalXp INTEGER, msgCount INTEGER, tag TEXT)");
+db.run("CREATE TABLE IF NOT EXISTS points (id TEXT, points INTEGER)");
 // update table if it does exist
-// Check if tag column exists in the levels table
-db.all("PRAGMA table_info(levels)", async (err, rows) => {
-	// Check if tag column exists
-	if (rows.filter(row => row.name === "tag").length === 0) {
-		// Add tag column
-		await db.run("ALTER TABLE levels ADD COLUMN tag TEXT");
-	}
-});
 
 client.on("ready", async () => {
 	console.log(`${colors.cyan("[INFO]")} Logged in as ${colors.green(client.user.tag)}`)
@@ -42,18 +31,11 @@ client.on("ready", async () => {
 		try {
 			console.log(`${colors.cyan("[INFO]")} Registering Commands...`)
 			let start = Date.now()
-			// For every guild
-			for (const guild of client.guilds.cache.values()) {
-				let gStart = Date.now();
-				console.log(`${colors.cyan("[INFO]")} Registering Commands for ${colors.green(guild.name)}...`);
-				// Register commands
-				await rest.put(
-					Discord.Routes.applicationGuildCommands(client.user.id, guild.id), {
-						body: commands
-					},
-				);
-				console.log(`${colors.cyan("[INFO]")} Successfully registered commands for ${colors.green(guild.name)}. Took ${colors.green((Date.now() - gStart) / 1000)} seconds.`);
-			};
+			// Global commands
+			await rest.put(Discord.Routes.applicationCommands(client.user.id), {
+				body: commands
+			});
+
 			console.log(`${colors.cyan("[INFO]")} Successfully registered commands. Took ${colors.green((Date.now() - start) / 1000)} seconds.`);
 		} catch (error) {
 			console.error(error);
@@ -64,69 +46,32 @@ client.on("ready", async () => {
 	console.log(`${colors.cyan("[INFO]")} Startup took ${colors.green((Date.now() - initTime) / 1000)} seconds.`)
 });
 
+// Functions
 
-client.on("messageCreate", async message => {
-	if (message.author.bot) return;
-	if (message.channel.type === "DM") return;
-	if (config.discord.levels.blacklist.includes(message.channel.id)) return;
-	if (config.discord.levels.blacklist.includes(message.channel.parentId)) return;
+checkAndModifyPoints = async (user, amount) => {
+	// Check if the user exists, if not, add them to the database
+	await db.get(`SELECT * FROM points WHERE id = '${user.id}'`, async (err, row) => {
 
-	// Calculate random xp
-	let xp = Math.floor(Math.random() * 10) + 15;
-	// If user is not in database, add them, {user: {xp = xp, lvl = 1, totalXp: xp, msgCount = 1}}
-	await db.get(`SELECT * FROM levels WHERE id = '${message.author.id}'`, async (err, row) => {
 		if (err) {
-			console.error(err);
+			console.error(`Smthn went wrong: ${err}`);
+			return false;
 		}
 		if (!row) {
-			await db.run(`INSERT INTO levels (id, xp, lvl, totalXp, msgCount, tag) VALUES ('${message.author.id}', ${xp}, 1, ${xp}, 1, '${message.author.tag}')`); // Add user to database
-		}
-	});
-
-	// Get user data
-	await db.get(`SELECT * FROM levels WHERE id = '${message.author.id}'`, async (err, row) => {
-		if (err) {
-			console.error(err);
+			await db.run(`INSERT INTO points (id, points) VALUES ('${user.id}', ${amount})`);
+			return amount;
 		}
 		if (row) {
-			var data = row;
-			let lvl = data.lvl;
-			data.msgCount++;
-
-			// Cooldown
-			if (cooldowns[message.author.id] && new Date() - cooldowns[message.author.id] < config.discord.levels.cooldownMinutes * 60 * 1000) return await db.run(`UPDATE levels SET xp = ${data.xp}, lvl = ${data.lvl}, totalXp = ${data.totalXp}, msgCount = ${data.msgCount} WHERE id = '${message.author.id}'`);
-			cooldowns[message.author.id] = new Date();
-
-			data.xp += xp;
-			data.totalXp += xp;
-
-			// If user is in database, and xp is greater than or equal to the calculated level up XP, add 1 to lvl and add the remainder to xp
-			let lvlUpXp = eval(config.discord.levels.lvlUpEquation);
-
-			// Keep running level up equation until xp is less than the calculated level up xp
-			while (data.xp >= lvlUpXp) {
-				data.lvl++;
-				data.xp -= lvlUpXp;
-				lvlUpXp = eval(config.discord.levels.lvlUpEquation);
-				// use config.discord.levels.lvlUpMessage to send a message when the user levels up
-				message.channel.send(config.discord.levels.lvlUpMessage.replace("{user}", `<@${message.author.id}>`).replace("{lvl}", data.lvl)).then(msg => {
-					setTimeout(() => {
-						msg.delete();
-					}, 10000);
-				});
-			}
-
-			// Update database
-			await db.run(`UPDATE levels SET xp = ${data.xp}, lvl = ${data.lvl}, totalXp = ${data.totalXp}, msgCount = ${data.msgCount}, tag = '${message.author.tag}' WHERE id = '${message.author.id}'`);
+			await db.run(`UPDATE points SET points = ${row.points + amount} WHERE id = '${user.id}'`);
+			return row.points + amount;
 		}
+		return false;
 	});
-
-});
+}
 
 client.on("interactionCreate", async interaction => {
 	if (!interaction.isCommand()) return;
 	switch (interaction.commandName) {
-		case "rank":
+		case "points":
 			var user;
 			if (interaction.options.getMember("user")) {
 				user = interaction.options.getMember("user").user;
@@ -134,84 +79,42 @@ client.on("interactionCreate", async interaction => {
 				user = interaction.user;
 			}
 			// Get user data
-			await db.get(`SELECT * FROM levels WHERE id = '${user.id}'`, async (err, row) => {
+			await db.get(`SELECT * FROM points WHERE id = '${user.id}'`, async (err, row) => {
 				if (err) {
 					console.error(err);
 				}
 				if (!row) return interaction.reply({
-					content: "This user has not sent any messages yet.",
+					content: "This user does not have any coins.",
 					ephemeral: true
 				});
 				if (row) {
 					var data = row;
-					let lvl = data.lvl;
-					let rank;
-					// Calculate rank
-					await db.all(`SELECT * FROM levels ORDER BY totalXp DESC`, async (err, rows) => {
-						if (err) {
-							console.error(err);
-						}
-						if (rows) {
-							let rank = 0;
-							for (let i = 0; i < rows.length; i++) {
-								if (rows[i].id === user.id) {
-									rank = i + 1;
-									break;
-								}
-							}
-							interaction.reply({
-								embeds: [{
-									title: `${user.tag}'s Rank`,
-									fields: [{
-											name: "Rank",
-											value: `#${rank}`,
-											inline: true
-										},
-										{
-											name: "Level",
-											value: data.lvl,
-											inline: true
-										},
-										{
-											name: "XP",
-											value: `${data.xp}/${eval(config.discord.levels.lvlUpEquation)}`,
-										},
-										{
-											name: "Total XP",
-											value: data.totalXp,
-											inline: true
-										},
-										{
-											name: "Messages Sent",
-											value: data.msgCount,
-											inline: true
-										}
-									],
-									color: 0x00ff00
-								}]
-							})
-						}
+					interaction.reply({
+						embeds: [{
+							title: `${user.username}'s Coins`,
+							description: `${config.discord.coin} ${data.points}`,
+						}]
 					});
 				}
 			});
 			break;
 		case "leaderboard":
-			await db.all(`SELECT * FROM levels ORDER BY totalXp DESC`, async (err, rows) => {
+			await db.all(`SELECT * FROM points ORDER BY points DESC`, async (err, rows) => {
 				if (err) {
 					console.error(err);
 				}
 				if (!rows) return interaction.reply({
-					content: "No one has sent any messages yet.",
+					content: "It's quiet here...",
 					ephemeral: true
 				});
 				if (rows) {
 					let leaderboard = [];
 					// Top 10
-					for (let i = 0; i < 10; i++) {
+					for (let i = 0; i < 5; i++) {
 						if (rows[i]) {
 							let user = await client.users.fetch(rows[i].id);
 							let lvl = rows[i].lvl;
-							leaderboard.push(`${i + 1}. <@${user.id}> - ${rows[i].xp}/${eval(config.discord.levels.lvlUpEquation)} L${rows[i].lvl} - ${rows[i].totalXp} XP - ${rows[i].msgCount} Messages`);
+							leaderboard.push(`${i + 1}. <@${user.id}> - ${rows[i].points}`);
 						}
 					}
 					interaction.reply({
@@ -225,39 +128,88 @@ client.on("interactionCreate", async interaction => {
 			});
 			break;
 
-		case "givexp":
-			// Dont gotta check perms, done on discord
-			// Dont gotta check arguments, done on discord
-
-			// Get user data
-			await db.get(`SELECT * FROM levels WHERE id = '${interaction.options.getUser("user").id}'`, async (err, row) => {
+		case "modify":
+			// check if the user is in the config.discord.givers array
+			if (!config.discord.givers.includes(interaction.user.id)) return interaction.reply({
+				content: "You do not have permission to use this command.",
+				ephemeral: true
+			});
+			// check if the arguments are there
+			if (!interaction.options.getMember("user")) return interaction.reply({
+				content: "You must specify a user.",
+				ephemeral: true
+			});
+			if (!interaction.options.getNumber("amount")) return interaction.reply({
+				content: "You must specify an amount.",
+				ephemeral: true
+			});
+			let outputStatus = await checkAndModifyPoints(interaction.options.getMember("user").user, interaction.options.getNumber("amount"));
+			if (outputStatus !== false) {
+				interaction.reply({
+					content: `Gave ${interaction.options.getMember("user").user.username} ${interaction.options.getNumber("amount")} coins.`,
+					ephemeral: true
+				});
+			} else {
+				interaction.reply({
+					content: `An error occurred.\n`,
+					ephemeral: true
+				});
+			}
+			break;
+		case "transfer": // Allows a user to transfer a positive amount of coins to another user at a 50% tax, rounded down, if the user sends 2 coins, the other user will receive 1, the other gets sent to the abyss.
+			// check if the arguments are there
+			if (!interaction.options.getMember("user")) return interaction.reply({
+				content: "You must specify a user.",
+				ephemeral: true
+			});
+			if (!interaction.options.getNumber("amount")) return interaction.reply({
+				content: "You must specify an amount.",
+				ephemeral: true
+			});
+			// Sanity check to make sure they arent trying to send negative coins and break the economy
+			if (interaction.options.getNumber("amount") < 0) return interaction.reply({
+				content: "You cannot send negative coins you lil goober.",
+				ephemeral: true
+			});
+			// check if the user has enough coins
+			await db.get(`SELECT * FROM points WHERE id = '${interaction.user.id}'`, async (err, row) => {
 				if (err) {
 					console.error(err);
+					return interaction.reply({
+						content: "An error occurred.",
+						ephemeral: true
+					});
 				}
 				if (!row) return interaction.reply({
-					content: "This user has not sent any messages yet.",
+					content: "You do not have any coins.",
 					ephemeral: true
 				});
 				if (row) {
-					var data = row;
-					let lvl = data.lvl;
-					data.xp += interaction.options.getInteger("amount");
-					data.totalXp += interaction.options.getInteger("amount");
-					// If user is in database, and xp is greater than or equal to the calculated level up XP, add 1 to lvl and add the remainder to xp
-					let lvlUpXp = eval(config.discord.levels.lvlUpEquation);
-
-					// Keep running level up equation until xp is less than the calculated level up xp
-					while (data.xp >= lvlUpXp) {
-						data.lvl++;
-						data.xp -= lvlUpXp;
-						lvlUpXp = eval(config.discord.levels.lvlUpEquation);
-					}
-
-					// Update database
-					await db.run(`UPDATE levels SET xp = ${data.xp}, lvl = ${data.lvl}, totalXp = ${data.totalXp}, msgCount = ${data.msgCount} WHERE id = '${interaction.options.getUser("user").id}'`);
-					interaction.reply({
-						content: `Gave ${interaction.options.getInteger("amount")} XP to ${interaction.options.getUser("user").tag}!`,
+					if (row.points < interaction.options.getNumber("amount")) return interaction.reply({
+						content: "You do not have enough coins.",
 						ephemeral: true
+					});
+					// If the user doesnt have any coins tell them.
+					if (row.points == 0) return interaction.reply({
+						content: "You do not have any coins.",
+						ephemeral: true
+					});
+					// Now check if they have enough for the tax
+					if (row.points < Math.floor(interaction.options.getNumber("amount") * 2)) return interaction.reply({
+						content: "You do not have enough coins to pay the tax.",
+						ephemeral: true
+					});
+					// At this point we know they have enough coins, so we can take them away, make sure to take the tax away too
+					checkAndModifyPoints(interaction.user, -Math.floor(interaction.options.getNumber("amount") * 2));
+					// Now we can give the other user the coins
+					checkAndModifyPoints(interaction.options.getMember("user").user, Math.floor(interaction.options.getNumber("amount")));
+					// Now we can tell the user that it worked
+					interaction.reply({
+						embeds: [{
+							title: "Transfer Successful",
+							color: 0x00ff00,
+							description: `You sent ${interaction.options.getNumber("amount")} coins to ${interaction.options.getMember("user").user.username}.`
+						}]
 					});
 				}
 			});
@@ -265,42 +217,6 @@ client.on("interactionCreate", async interaction => {
 	};
 });
 
-
-app.get("/api/levels", async (req, res) => {
-	// Pretty much send the entire database
-	await db.all(`SELECT * FROM levels ORDER BY totalXp DESC`, async (err, rows) => {
-		if (err) {
-			console.error(err);
-			return res.sendStatus(500); // Internal server error
-		}
-		if (!rows) return res.sendStatus(204) // No content
-		if (rows) {
-			let output = rows;
-			return res.json(output);
-		}
-	});
-});
-
-app.get("/api/levels/:id", async (req, res) => {
-	// Get user data
-	await db.get(`SELECT * FROM levels WHERE id = '${req.params.id}'`, async (err, row) => {
-		if (err) {
-			console.error(err);
-			return res.sendStatus(500); // Internal server error
-		}
-		if (!row) return res.sendStatus(404) // Not found
-		if (row) {
-			let output = row;
-			// Get user info {avatar, tag, etc}
-			let user = await client.users.fetch(req.params.id);
-			output.tag = user.tag;
-			output.avatar = user.displayAvatarURL({extension: "png", size: 1024});
-			output.banner = user.bannerURL({extension: "png"});
-			if (!output.tag) output.tag = "Unknown#0000";
-			return res.json(output);
-		}
-	});
-});
 
 
 // Handle SIGINT gracefully
@@ -331,15 +247,6 @@ process.on('SIGINT', async () => {
 	}
 });*/
 
-if (config.api.enabled) {
-	// Start API
-	app.listen(config.api.port, () => {
-		console.log(`${colors.cyan("[INFO]")} API listening on port ${config.api.port}`);
-	});
-}
-
-// Global Variables
-var cooldowns = {};
 
 
 console.log(`${colors.cyan("[INFO]")} Starting...`)

@@ -1,59 +1,70 @@
 [
 	{
-		"name": "rank",
-		"description": "Get your rank",
+		"name": "modify",
+		"description": "Modify a users points",
 		"type": 1,
 		"options": [
 			{
 				"name": "user",
-				"description": "The user you want to get the rank of",
+				"description": "The user to modify",
 				"type": 6,
-				"required": false
+				"required": true
+			},
+			{
+				"name": "amount",
+				"description": "The amount to modify (can be negative)",
+				"type": 10,
+				"required": true
+			}
+		]
+	},
+	{
+		"name": "give-all",
+		"description": "Give all users (who already have points) points",
+		"type": 1,
+		"options": [
+			{
+				"name": "amount",
+				"description": "The amount to give (or take if negative)",
+				"type": 10,
+				"required": true
 			}
 		]
 	},
 	{
 		"name": "leaderboard",
-		"description": "Get the top 10 users",
+		"description": "Cactus points leaderboard",
 		"type": 1
 	},
 	{
-		"name": "givexp",
-		"description": "Give XP to a user",
+		"name": "transfer",
+		"description": "Transfer points to another user (2:1 ratio)",
 		"type": 1,
-		"default_member_permissions": 0,
 		"options": [
 			{
 				"name": "user",
-				"description": "The user you want to give XP to",
+				"description": "The user to transfer to",
 				"type": 6,
 				"required": true
 			},
 			{
 				"name": "amount",
-				"description": "The amount of XP you want to give",
-				"type": 4,
+				"description": "The amount to transfer",
+				"type": 10,
 				"required": true
 			}
 		]
 	},
 	{
-		"name": "removexp",
-		"description": "Remove XP from a user",
+		"name": "points",
+		"description": "Check the points of yourself or another user",
 		"type": 1,
-		"default_member_permissions": 0,
 		"options": [
 			{
 				"name": "user",
-				"description": "The user you want to remove XP from",
+				"description": "The user to check",
 				"type": 6,
-				"required": true
-			},
-			{
-				"name": "amount",
-				"description": "The amount of XP you want to remove",
-				"type": 4,
-				"required": true
+				"required": false
 			}
 		]
 	}

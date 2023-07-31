@@ -2,15 +2,10 @@
 	"discord": {
 		"token": "",
 		"errorChannel": "",
-		"levels": {
-			"lvlUpEquation": "5 * (lvl ^ 2) + (50 * lvl) + 100",
-			"lvlUpMessage": "{user}, you have leveled up to level {lvl}!",
-			"cooldownMinutes": 1,
-			"blacklist": []
-		}
-	},
-	"api": {
-		"port": 8080,
-		"enabled": false
+		"coin": "<:cactus:1135411352987504660>",
+		"givers": [
+			"348601979473362955",
+			"289884287765839882"
+		]
 	}
 }
