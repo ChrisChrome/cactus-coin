@@ -241,7 +241,7 @@ client.on("interactionCreate", async interaction => {
 						embeds: [{
 							title: "Transfer Receipt",
 							color: 0xffff00,
-							description: `You sent ${interaction.options.getNumber("amount")} coins to ${interaction.options.getMember("user").user}.`
+							description: `You sent ${interaction.options.getNumber("amount")} coins to ${interaction.options.getMember("user").user}.\nYou paid a tax of ${Math.floor(interaction.options.getNumber("amount"))} coins.`
 						}]
 					})
 
