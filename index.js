@@ -149,11 +149,19 @@ client.on("interactionCreate", async interaction => {
 					content: `Gave ${interaction.options.getMember("user").user.username} ${interaction.options.getNumber("amount")} coins.`,
 					ephemeral: true
 				});
+				// add + or - to the amount
+				let amount = interaction.options.getNumber("amount");
+				if (amount > 0) {
+					amount = `+${amount}`;
+				} else {
+					amount = `-${amount}`;
+				}
+				// Send the log to the log channel
 				// Tell the user their coins were modified
 				interaction.options.getMember("user").user.send({
 					embeds: [{
 						title: "Coins Modified",
-						description: `${config.discord.coin} ${interaction.options.getNumber("amount")}`,
+						description: `${config.discord.coin} ${amount}`,
 						color: 0xFFff00
 					}]
 				});
