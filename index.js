@@ -48,7 +48,7 @@ client.on("ready", async () => {
 
 // Functions
 
-checkAndModifyPoints = async (user, amount) => {
+checkAndModifyPoints = async (user, amount, override) => {
 	// Check if the user exists, if not, add them to the database
 	await db.get(`SELECT * FROM points WHERE id = '${user.id}'`, async (err, row) => {
 
@@ -61,6 +61,10 @@ checkAndModifyPoints = async (user, amount) => {
 			return amount;
 		}
 		if (row) {
+			if (override) {
+				await db.run(`UPDATE points SET points = ${amount} WHERE id = '${user.id}'`);
+				return amount;
+			}
 			await db.run(`UPDATE points SET points = ${row.points + amount} WHERE id = '${user.id}'`);
 			return row.points + amount;
 		}
@@ -143,7 +147,7 @@ client.on("interactionCreate", async interaction => {
 				content: "You must specify an amount.",
 				ephemeral: true
 			});
-			let outputStatus = await checkAndModifyPoints(interaction.options.getMember("user").user, interaction.options.getNumber("amount"));
+			let outputStatus = await checkAndModifyPoints(interaction.options.getMember("user").user, interaction.options.getNumber("amount"), interaction.options.getBoolean("override") || false);
 			if (outputStatus !== false) {
 				interaction.reply({
 					content: `Gave ${interaction.options.getMember("user").user.username} ${interaction.options.getNumber("amount")} coins.`,

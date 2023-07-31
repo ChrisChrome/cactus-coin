@@ -15,6 +15,12 @@
 				"description": "The amount to modify (can be negative)",
 				"type": 10,
 				"required": true
+			},
+			{
+				"name": "override",
+				"description": "Override their coins with the amount given instead of adding to it",
+				"type": 5,
+				"required": false
 			}
 		]
 	},
