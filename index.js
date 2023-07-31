@@ -110,7 +110,7 @@ client.on("interactionCreate", async interaction => {
 				if (rows) {
 					let leaderboard = [];
 					// Top 10
-					for (let i = 0; i < 5; i++) {
+					for (let i = 0; i < 10; i++) {
 						if (rows[i]) {
 							let user = await client.users.fetch(rows[i].id);
 							let lvl = rows[i].lvl;
