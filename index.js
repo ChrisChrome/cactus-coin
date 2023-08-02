@@ -160,7 +160,7 @@ client.on("interactionCreate", async interaction => {
 						description: `${config.discord.coin}${amount}`,
 						color: 0xFFff00
 					}]
-				});
+				}).catch(err => {});
 
 
 			} else {
@@ -237,14 +237,14 @@ client.on("interactionCreate", async interaction => {
 							color: 0xffff00,
 							description: `You received ${config.discord.coin}${amount} from ${interaction.user}.`
 						}]
-					});
+					}).catch(err => {});;
 					interaction.user.send({
 						embeds: [{
 							title: "Transfer Receipt",
 							color: 0xffff00,
 							description: `You sent ${config.discord.coin}${amount} to ${interaction.options.getMember("user").user}.\nYou paid a tax of ${config.discord.coin}${amount}.`
 						}]
-					})
+					}).catch(err => {});
 
 				}
 			});
