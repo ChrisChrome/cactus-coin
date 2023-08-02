@@ -185,6 +185,11 @@ client.on("interactionCreate", async interaction => {
 				content: "You cannot send negative coins you lil goober.",
 				ephemeral: true
 			});
+
+			// Round the input up (these fuckers found a dupe one fucking day into the bot, fuck you krill issue)
+			let amount = Math.ceil(interaction.options.getNumber("amount"));
+			
+
 			// check if the user has enough coins
 			await db.get(`SELECT * FROM points WHERE id = '${interaction.user.id}'`, async (err, row) => {
 				if (err) {
@@ -199,7 +204,7 @@ client.on("interactionCreate", async interaction => {
 					ephemeral: true
 				});
 				if (row) {
-					if (row.points < interaction.options.getNumber("amount")) return interaction.reply({
+					if (row.points < amount) return interaction.reply({
 						content: "You do not have enough coins.",
 						ephemeral: true
 					});
@@ -209,20 +214,20 @@ client.on("interactionCreate", async interaction => {
 						ephemeral: true
 					});
 					// Now check if they have enough for the tax
-					if (row.points < Math.floor(interaction.options.getNumber("amount") * 2)) return interaction.reply({
+					if (row.points < Math.floor(amount * 2)) return interaction.reply({
 						content: "You do not have enough coins to pay the tax.",
 						ephemeral: true
 					});
 					// At this point we know they have enough coins, so we can take them away, make sure to take the tax away too
-					checkAndModifyPoints(interaction.user, -Math.floor(interaction.options.getNumber("amount") * 2));
+					checkAndModifyPoints(interaction.user, -Math.floor(amount * 2));
 					// Now we can give the other user the coins
-					checkAndModifyPoints(interaction.options.getMember("user").user, Math.floor(interaction.options.getNumber("amount")));
+					checkAndModifyPoints(interaction.options.getMember("user").user, amount);
 					// Now we can tell the user that it worked
 					interaction.reply({
 						embeds: [{
 							title: "Transfer Successful",
 							color: 0x00ff00,
-							description: `You sent ${config.discord.coin}${interaction.options.getNumber("amount")} to ${interaction.options.getMember("user").user.username}.`
+							description: `You sent ${config.discord.coin}${amount} to ${interaction.options.getMember("user").user.username}.`
 						}]
 					});
 					// Tell the user being transferred from about the change as a sort of receipt
@@ -230,14 +235,14 @@ client.on("interactionCreate", async interaction => {
 						embeds: [{
 							title: "Transfer Receipt",
 							color: 0xffff00,
-							description: `You received ${config.discord.coin}${Math.floor(interaction.options.getNumber("amount"))} from ${interaction.user}.`
+							description: `You received ${config.discord.coin}${amount} from ${interaction.user}.`
 						}]
 					});
 					interaction.user.send({
 						embeds: [{
 							title: "Transfer Receipt",
 							color: 0xffff00,
-							description: `You sent ${config.discord.coin}${interaction.options.getNumber("amount")} to ${interaction.options.getMember("user").user}.\nYou paid a tax of ${config.discord.coin}${Math.floor(interaction.options.getNumber("amount"))}.`
+							description: `You sent ${config.discord.coin}${amount} to ${interaction.options.getMember("user").user}.\nYou paid a tax of ${config.discord.coin}${amount}.`
 						}]
 					})
 
