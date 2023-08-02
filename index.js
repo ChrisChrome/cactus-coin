@@ -266,6 +266,7 @@ client.on("interactionCreate", async interaction => {
 						let ledger = [];
 						for (let i = 0; i < rows.length; i++) {
 							let user = await client.users.fetch(rows[i].id);
+							if (rows[i].points == 0) continue;
 							ledger.push(`${user.username} - ${rows[i].points}`);
 						}
 						interaction.reply({
