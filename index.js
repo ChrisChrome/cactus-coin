@@ -160,7 +160,7 @@ client.on("interactionCreate", async interaction => {
 						description: `${config.discord.coin}${amount}`,
 						color: 0xFFff00
 					}]
-				}).catch(err => {});
+				}).catch(err => { });
 
 
 			} else {
@@ -188,7 +188,7 @@ client.on("interactionCreate", async interaction => {
 
 			// Round the input up (these fuckers found a dupe one fucking day into the bot, fuck you krill issue)
 			let amount = Math.ceil(interaction.options.getNumber("amount"));
-			
+
 
 			// check if the user has enough coins
 			await db.get(`SELECT * FROM points WHERE id = '${interaction.user.id}'`, async (err, row) => {
@@ -237,52 +237,176 @@ client.on("interactionCreate", async interaction => {
 							color: 0xffff00,
 							description: `You received ${config.discord.coin}${amount} from ${interaction.user}.`
 						}]
-					}).catch(err => {});;
+					}).catch(err => { });;
 					interaction.user.send({
 						embeds: [{
 							title: "Transfer Receipt",
 							color: 0xffff00,
 							description: `You sent ${config.discord.coin}${amount} to ${interaction.options.getMember("user").user}.\nYou paid a tax of ${config.discord.coin}${amount}.`
 						}]
-					}).catch(err => {});
+					}).catch(err => { });
 
 				}
 			});
 			break;
-			case "ledger": // Allows a user to see the balance of every user in the database
-				db.all(`SELECT * FROM points`, async (err, rows) => {
-					if (err) {
-						console.error(err);
-						return interaction.reply({
-							content: "An error occurred.",
-							ephemeral: true
-						});
-					}
-					if (!rows) return interaction.reply({
-						content: "It's quiet here...",
+		case "ledger": // Allows a user to see the balance of every user in the database
+			db.all(`SELECT * FROM points`, async (err, rows) => {
+				if (err) {
+					console.error(err);
+					return interaction.reply({
+						content: "An error occurred.",
 						ephemeral: true
 					});
-					if (rows) {
-						let ledger = [];
-						for (let i = 0; i < rows.length; i++) {
-							let user = await client.users.fetch(rows[i].id);
-							if (rows[i].points == 0) continue;
-							ledger.push(`${user.username} - ${rows[i].points}`);
-						}
-						interaction.reply({
-							embeds: [{
-								title: "Ledger",
-								description: ledger.join("\n"),
-								color: 0x00ff00
-							}]
-						});
-					}
+				}
+				if (!rows) return interaction.reply({
+					content: "It's quiet here...",
+					ephemeral: true
 				});
-				break;
+				if (rows) {
+					let ledger = [];
+					for (let i = 0; i < rows.length; i++) {
+						let user = await client.users.fetch(rows[i].id);
+						if (rows[i].points == 0) continue;
+						ledger.push(`${user.username} - ${rows[i].points}`);
+					}
+					interaction.reply({
+						embeds: [{
+							title: "Ledger",
+							description: ledger.join("\n"),
+							color: 0x00ff00
+						}]
+					});
+				}
+			});
+			break;
+		case "play": // Allows a user to play a game to earn coins (or lose them)
+			if (gameCooldowns[interaction.user.id]) {
+				if (gameCooldowns[interaction.user.id][interaction.options.getString("game")]) {
+					let timesPlayed = gameCooldowns[interaction.user.id][interaction.options.getString("game")].timesPlayed;
+					let unlock = gameCooldowns[interaction.user.id][interaction.options.getString("game")].unlock;
+					if (timesPlayed >= config.games.gamesPerPeriod) {
+						if (unlock < Date.now()) {
+							delete gameCooldowns[interaction.user.id][interaction.options.getString("game")];
+						} else {
+							return interaction.reply({
+								content: `You can play again in <t:${Math.floor(unlock / 1000)}:R>.`,
+								ephemeral: true
+							});
+						}
+					}
+				}
+			}
+			// Check if they're in debt, if they are dont let them play
+			await db.get(`SELECT * FROM points WHERE id = '${interaction.user.id}'`, async (err, row) => {
+				if (err) {
+					console.error(err);
+					return interaction.reply({
+						content: "An error occurred.",
+						ephemeral: true
+					});
+				}
+
+				if (row && row.points < 0) return interaction.reply({
+					content: "You are in debt, you cannot play games until you pay it off.",
+					ephemeral: true
+				});
+			});
+			let result = await playGame(interaction.options.getString("game"));
+			await checkAndModifyPoints(interaction.user, result.difference);
+			if (!gameCooldowns[interaction.user.id]) gameCooldowns[interaction.user.id] = {};
+			if (!gameCooldowns[interaction.user.id][interaction.options.getString("game")]) {
+				gameCooldowns[interaction.user.id][interaction.options.getString("game")] = {
+					timesPlayed: 1,
+					unlock: Date.now() + (config.games.waitPeriod * 60 * 1000)
+				};
+			} else {
+				let timesPlayed = gameCooldowns[interaction.user.id][interaction.options.getString("game")].timesPlayed;
+				// Add the cooldown from config.games.waitPeriod
+				gameCooldowns[interaction.user.id][interaction.options.getString("game")] = {
+					timesPlayed: timesPlayed + 1,
+					unlock: Date.now() + (config.games.waitPeriod * 60 * 1000)
+				};
+			}
+
+			console.log(`[DEBUG GAME] ${JSON.stringify(gameCooldowns)}`);
+
+			interaction.reply(result.string);
+			break;
 	};
 });
 
+// Game function
+function playGame(gameName) {
+	const randomNumber = Math.random() * 100;
+	let result = {
+		string: "",
+		difference: 0
+	};
 
+	switch (gameName) {
+		case 'FISHING':
+			if (randomNumber < 40) {
+				result.string = "You caught water! Congrats?";
+			} else if (randomNumber < 70) {
+				result.string = "You caught a fish! That's pretty cool I guess. (+1 coin)";
+				result.difference = 1;
+			} else if (randomNumber < 90) {
+				result.string = "You caught a fish but BIGGER! Neat! (+2 coins)";
+				result.difference = 2;
+			} else if (randomNumber < 95) {
+				result.string = "You caught a WORM with your worm! Cactus likes worms! (+3 coins)";
+				result.difference = 3;
+			} else {
+				result.string = "You caught a piranha. It didn't appreciate that and mugged you at gunpoint. (-3 coins)";
+				result.difference = -3;
+			}
+			break;
+
+		case 'DIGGING':
+			if (randomNumber < 40) {
+				result.string = "You dug up dirt! Bleh! That sure is boring.";
+			} else if (randomNumber < 70) {
+				result.string = "You dug up a shiny pebble! That's pretty rad. (+1 coin)";
+				result.difference = 1;
+			} else if (randomNumber < 90) {
+				result.string = "You dug up a stick. Sticks are sticky! Nice! (+2 coins)";
+				result.difference = 2;
+			} else if (randomNumber < 95) {
+				result.string = "You dug up a sick ass earthworm! Cactus likes worms, let me tell you. (+3 coins)";
+				result.difference = 3;
+			} else {
+				result.string = "You hit an electrical wire digging. That was one crazy shock! Melted the coins you had on you! (-3 coins)";
+				result.difference = -3;
+			}
+			break;
+
+		case 'HUNTING':
+			if (randomNumber < 40) {
+				result.string = "You came back empty handed like a loser. Nice job.";
+			} else if (randomNumber < 70) {
+				result.string = "You killed a rabbit. That's pretty cool I guess, you can make a jump boost from it. (+1 coin)";
+				result.difference = 1;
+			} else if (randomNumber < 90) {
+				result.string = "You killed a deer! Nice shooting! (+2 coins)";
+				result.difference = 2;
+			} else if (randomNumber < 95) {
+				result.string = "You killed a Bigfoot. Wait.... What? You killed a bigfo- The government pays to keep you quiet. (+3 coins.)";
+				result.difference = 3;
+			} else {
+				result.string = "You were trying to shoot a deer, missed, and hit Carl. They fined you for the hospital bills. (-3 coins)";
+				result.difference = -3;
+			}
+			break;
+
+		default:
+			result.string = "Unknown game";
+			break;
+	}
+
+	return result;
+}
+
+var gameCooldowns = {};
 
 // Handle SIGINT gracefully
 process.on('SIGINT', async () => {
