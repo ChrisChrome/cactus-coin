@@ -328,8 +328,6 @@ client.on("interactionCreate", async interaction => {
 				};
 			}
 
-			console.log(`[DEBUG GAME] ${JSON.stringify(gameCooldowns)}`);
-
 			interaction.reply(result.string);
 			break;
 	};
