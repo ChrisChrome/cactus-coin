@@ -528,7 +528,7 @@ client.on("interactionCreate", async interaction => {
 								return await interaction.editReply({
 									embeds: [{
 										title: "Triple!",
-										description: `${slotResults.spinResult[0]}${slotResults.spinResult[1]}${slotResults.spinResult[2]}\nYou won ${difference} coins!`,
+										description: `${slotResults.spinResult[0]}${slotResults.spinResult[1]}${slotResults.spinResult[2]}\nYou won ${difference + 3} coins! (You get your play fee back)`,
 										color: 0x00ffff
 									}]
 								});
@@ -536,7 +536,7 @@ client.on("interactionCreate", async interaction => {
 								await interaction.editReply({
 									embeds: [{
 										title: "Slots",
-										description: `${slotResults.spinResult[0]}${slotResults.spinResult[1]}${slotResults.spinResult[2]}\nYou won ${difference} coins!`,
+										description: `${slotResults.spinResult[0]}${slotResults.spinResult[1]}${slotResults.spinResult[2]}\nYou won ${difference + 3} coins! (You get your play fee back)`,
 										color: 0x00ff00
 									}]
 								});
