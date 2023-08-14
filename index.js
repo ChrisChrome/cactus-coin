@@ -512,7 +512,7 @@ client.on("interactionCreate", async interaction => {
 						});
 						// Check if they won or lost, if they won, give them the prize
 						if (slotResults.coinDifference > 0) {
-							await checkAndModifyPoints(interaction.user.id, slotResults.coinDifference);
+							await checkAndModifyPoints(interaction.user.id, slotResults.coinDifference + 3);
 							if (slotResults.jackpot) {
 								return await interaction.editReply({
 									embeds: [{
@@ -539,6 +539,8 @@ client.on("interactionCreate", async interaction => {
 								});
 							}
 						} else {
+							// They lost, sad
+							checkAndModifyPoints(interaction.user.id, slotResults.coinDifference);
 							if (slotResults.bombs) {
 								// Triple bombs, very sad
 								await interaction.editReply({
