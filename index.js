@@ -424,20 +424,12 @@ client.on("interactionCreate", async interaction => {
 				}
 			}
 			// Check if they're in debt, if they are dont let them play
-			await db.get(`SELECT * FROM points WHERE id = '${interaction.user.id}'`, async (err, row) => {
-				if (err) {
-					console.error(err);
-					return interaction.reply({
-						content: "An error occurred.",
-						ephemeral: true
-					});
-				}
-
-				if (row && row.points < 0) return interaction.reply({
-					content: "You are in debt, you cannot play games until you pay it off.",
-					ephemeral: true
-				});
+			balance = await checkPoints(interaction.user);
+			if (balance < 0) return interaction.reply({
+				content: "You are in debt, you cannot play games until you are out of debt.",
+				ephemeral: true
 			});
+			
 			let result = await playGame(interaction.options.getString("game"));
 			await checkAndModifyPoints(interaction.user, result.difference);
 			if (!gameCooldowns[interaction.user.id]) gameCooldowns[interaction.user.id] = {};
