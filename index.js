@@ -546,7 +546,7 @@ client.on("interactionCreate", async interaction => {
 								await interaction.editReply({
 									embeds: [{
 										title: "Bombs!",
-										description: `${slotResults.spinResult[0]}${slotResults.spinResult[1]}${slotResults.spinResult[2]}\nYou lost ${Math.abs(slotResults.coinDifference)} coins!`,
+										description: `${slotResults.spinResult[0]}${slotResults.spinResult[1]}${slotResults.spinResult[2]}\nYou lost ${Math.abs(slotResults.coinDifference)} coins!\nYou now have ${await checkPoints(interaction.user)} coins.`,
 										color: 0xff0000
 									}]
 								});
@@ -554,7 +554,7 @@ client.on("interactionCreate", async interaction => {
 								await interaction.editReply({
 									embeds: [{
 										title: "Slots",
-										description: `${slotResults.spinResult[0]}${slotResults.spinResult[1]}${slotResults.spinResult[2]}\nYou lost ${Math.abs(slotResults.coinDifference)} coins!`,
+										description: `${slotResults.spinResult[0]}${slotResults.spinResult[1]}${slotResults.spinResult[2]}\nYou lost ${Math.abs(slotResults.coinDifference)} coins!\nYou now have ${await checkPoints(interaction.user)} coins.`,
 										color: 0xff0000
 									}]
 								});
