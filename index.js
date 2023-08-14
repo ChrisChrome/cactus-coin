@@ -270,32 +270,32 @@ client.on("interactionCreate", async interaction => {
 					break;
 			}
 			break;
-			case "modifyeveryone": // Modify the coins of everyone in the database
-				// check if the user is in the config.discord.givers array
-				if (!config.discord.givers.includes(interaction.user.id)) return interaction.reply({
-					content: "You do not have permission to use this command.",
+		case "modifyeveryone": // Modify the coins of everyone in the database
+			// check if the user is in the config.discord.givers array
+			if (!config.discord.givers.includes(interaction.user.id)) return interaction.reply({
+				content: "You do not have permission to use this command.",
+				ephemeral: true
+			});
+			// Run a lil db query to update every user's coins, dont bother sending a message to the user, it would take too long
+			await db.all(`SELECT * FROM points`, async (err, rows) => {
+				if (err) {
+					console.error(err);
+				}
+				if (!rows) return interaction.reply({
+					content: "It's quiet here...",
 					ephemeral: true
 				});
-				// Run a lil db query to update every user's coins, dont bother sending a message to the user, it would take too long
-				await db.all(`SELECT * FROM points`, async (err, rows) => {
-					if (err) {
-						console.error(err);
+				if (rows) {
+					for (let i = 0; i < rows.length; i++) {
+						checkAndModifyPoints(await client.users.fetch(rows[i].id), interaction.options.getNumber("amount"));
 					}
-					if (!rows) return interaction.reply({
-						content: "It's quiet here...",
+					interaction.reply({
+						content: `Gave everyone ${interaction.options.getNumber("amount")} coins.`,
 						ephemeral: true
 					});
-					if (rows) {
-						for (let i = 0; i < rows.length; i++) {
-							checkAndModifyPoints(await client.users.fetch(rows[i].id), interaction.options.getNumber("amount"));
-						}
-						interaction.reply({
-							content: `Gave everyone ${interaction.options.getNumber("amount")} coins.`,
-							ephemeral: true
-						});
-					}
-				});
-				break;
+				}
+			});
+			break;
 
 		case "transfer": // Allows a user to transfer a positive amount of coins to another user at a 50% tax, rounded down, if the user sends 2 coins, the other user will receive 1, the other gets sent to the abyss.
 			// check if the arguments are there
@@ -511,13 +511,16 @@ client.on("interactionCreate", async interaction => {
 							}]
 						});
 						// Check if they won or lost, if they won, give them the prize
-						await checkAndModifyPoints(interaction.user.id, slotResults.coinDifference);
-						if (slotResults.coinDifference > 0) {
-							await checkAndModifyPoints(interaction.user.id, 3); // Give them the 3 coins back
+						difference = await new Number(slotResults.coinDifference);
+						await checkAndModifyPoints(interaction.user, difference);
+						newBal = await checkPoints(interaction.user);
+						if (difference > 0) {
+							await checkAndModifyPoints(interaction.user, 3);
+							if (slotResults.jackpot) {
 								return await interaction.editReply({
 									embeds: [{
 										title: "Jackpot!",
-										description: `:rotating_light: ${slotResults.spinResult[0]}${slotResults.spinResult[1]}${slotResults.spinResult[2]} :rotating_light:\nYou won the jackpot! (${slotResults.coinDifference} coins)`,
+										description: `:rotating_light: ${slotResults.spinResult[0]}${slotResults.spinResult[1]}${slotResults.spinResult[2]} :rotating_light:\nYou won the jackpot! (${difference} coins)`,
 										color: 0xffffff
 									}]
 								});
@@ -525,7 +528,7 @@ client.on("interactionCreate", async interaction => {
 								return await interaction.editReply({
 									embeds: [{
 										title: "Triple!",
-										description: `${slotResults.spinResult[0]}${slotResults.spinResult[1]}${slotResults.spinResult[2]}\nYou won ${slotResults.coinDifference} coins!`,
+										description: `${slotResults.spinResult[0]}${slotResults.spinResult[1]}${slotResults.spinResult[2]}\nYou won ${difference} coins!`,
 										color: 0x00ffff
 									}]
 								});
@@ -533,7 +536,7 @@ client.on("interactionCreate", async interaction => {
 								await interaction.editReply({
 									embeds: [{
 										title: "Slots",
-										description: `${slotResults.spinResult[0]}${slotResults.spinResult[1]}${slotResults.spinResult[2]}\nYou won ${slotResults.coinDifference} coins!`,
+										description: `${slotResults.spinResult[0]}${slotResults.spinResult[1]}${slotResults.spinResult[2]}\nYou won ${difference} coins!`,
 										color: 0x00ff00
 									}]
 								});
@@ -545,7 +548,7 @@ client.on("interactionCreate", async interaction => {
 								await interaction.editReply({
 									embeds: [{
 										title: "Bombs!",
-										description: `${slotResults.spinResult[0]}${slotResults.spinResult[1]}${slotResults.spinResult[2]}\nYou lost ${Math.abs(slotResults.coinDifference)} coins!\nYou now have ${await checkPoints(interaction.user)} coins.`,
+										description: `${slotResults.spinResult[0]}${slotResults.spinResult[1]}${slotResults.spinResult[2]}\nYou lost ${Math.abs(difference)} coins!`,
 										color: 0xff0000
 									}]
 								});
@@ -553,7 +556,7 @@ client.on("interactionCreate", async interaction => {
 								await interaction.editReply({
 									embeds: [{
 										title: "Slots",
-										description: `${slotResults.spinResult[0]}${slotResults.spinResult[1]}${slotResults.spinResult[2]}\nYou lost ${Math.abs(slotResults.coinDifference)} coins!\nYou now have ${await checkPoints(interaction.user)} coins.`,
+										description: `${slotResults.spinResult[0]}${slotResults.spinResult[1]}${slotResults.spinResult[2]}\nYou lost ${Math.abs(difference)} coins!`,
 										color: 0xff0000
 									}]
 								});
@@ -755,7 +758,7 @@ function playSlotMachine() {
 		return counts;
 	}, {});
 
-	let coinDifference = -3; // Default coin difference for no match
+	let coinDifference = 0; // Default coin difference for no match, they just lose the play cost
 	let triple = false;
 	let jackpot = false;
 	let bombs = false;

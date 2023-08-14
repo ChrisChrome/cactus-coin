@@ -108,7 +108,7 @@
 	},
 	{
 		"name": "slots",
-		"description": "Play the slots",
+		"description": "Play the slots (Costs 3 coins)",
 		"type": 1
 	},
 	{
