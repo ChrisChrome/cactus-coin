@@ -42,7 +42,6 @@ client.on("ready", async () => {
 		}
 	})();
 
-
 	// Log startup time in seconds
 	console.log(`${colors.cyan("[INFO]")} Startup took ${colors.green((Date.now() - initTime) / 1000)} seconds.`)
 });
@@ -73,10 +72,29 @@ checkAndModifyPoints = async (user, amount, override) => {
 	});
 }
 
+checkPoints = (user) => {
+	// Needs to be awaited
+	return new Promise((resolve, reject) => {
+		db.get(`SELECT * FROM points WHERE id = '${user.id}'`, async (err, row) => {
+			if (err) {
+				console.error(err);
+				reject(err);
+			}
+			if (!row) {
+				await db.run(`INSERT INTO points (id, points) VALUES ('${user.id}', 0)`);
+				resolve(0);
+			}
+			if (row) {
+				resolve(row.points);
+			}
+		});
+	});
+}
+
 client.on("interactionCreate", async interaction => {
 	if (!interaction.isCommand()) return;
 	switch (interaction.commandName) {
-		case "points":
+		case "coins":
 			var user;
 			if (interaction.options.getMember("user")) {
 				user = interaction.options.getMember("user").user;
@@ -149,8 +167,6 @@ client.on("interactionCreate", async interaction => {
 				let amount = interaction.options.getNumber("amount");
 				if (amount > 0) {
 					amount = `+${amount}`;
-				} else {
-					amount = `-${amount}`;
 				}
 				// Send the log to the log channel
 				// Tell the user their coins were modified
@@ -170,6 +186,117 @@ client.on("interactionCreate", async interaction => {
 				});
 			}
 			break;
+		case "modifyrandom": // Allows a user to modify a random user's coins
+			// check if the user is in the config.discord.givers array
+			if (!config.discord.givers.includes(interaction.user.id)) return interaction.reply({
+				content: "You do not have permission to use this command.",
+				ephemeral: true
+			});
+			switch (interaction.options.getString("type")) {
+				case "database":
+					// Get a random user from the database
+					await db.all(`SELECT * FROM points`, async (err, rows) => {
+						if (err) {
+							console.error(err);
+						}
+						if (!rows) return interaction.reply({
+							content: "It's quiet here...",
+							ephemeral: true
+						});
+						if (rows) {
+							let randomUser = await rows[Math.floor(Math.random() * rows.length)];
+							randomUser = await client.users.fetch(randomUser.id);
+							let outputStatus = await checkAndModifyPoints(await client.users.fetch(randomUser.id), interaction.options.getNumber("amount"));
+							if (outputStatus !== false) {
+								interaction.reply({
+									content: `Gave ${await client.users.fetch(randomUser.id)} ${interaction.options.getNumber("amount")} coins.`,
+									ephemeral: true
+								});
+								// add + or - to the amount
+								let amount = interaction.options.getNumber("amount");
+								if (amount > 0) {
+									amount = `+${amount}`;
+								}
+								// Send the log to the log channel
+								// Tell the user their coins were modified
+								randomUser.send({
+									embeds: [{
+										title: "Coins Modified",
+										description: `${config.discord.coin}${amount}`,
+										color: 0xFFff00
+									}]
+								}).catch(err => { });
+
+							} else {
+								interaction.reply({
+									content: `An error occurred.\n`,
+									ephemeral: true
+								});
+							}
+						}
+					});
+					break;
+				case "guild":
+					// Get a random user from the guild
+					await interaction.guild.members.fetch();
+					let userList = await interaction.guild.members.cache.filter(member => !member.user.bot);
+					let randomUser = await userList[Math.floor(Math.random() * userList.length)];
+					let outputStatus = await checkAndModifyPoints(randomUser.user, interaction.options.getNumber("amount"));
+					if (outputStatus !== false) {
+						interaction.reply({
+							content: `Gave ${randomUser.user.username} ${interaction.options.getNumber("amount")} coins.`,
+							ephemeral: true
+						});
+						// add + or - to the amount
+						let amount = interaction.options.getNumber("amount");
+						if (amount > 0) {
+							amount = `+${amount}`;
+						}
+						// Send the log to the log channel
+						// Tell the user their coins were modified
+						randomUser.user.send({
+							embeds: [{
+								title: "Coins Modified",
+								description: `${config.discord.coin}${amount}`,
+								color: 0xFFff00
+							}]
+						}).catch(err => { });
+					} else {
+						interaction.reply({
+							content: `An error occurred.\n`,
+							ephemeral: true
+						});
+					}
+					break;
+			}
+			break;
+			case "modifyeveryone": // Modify the coins of everyone in the database
+				// check if the user is in the config.discord.givers array
+				if (!config.discord.givers.includes(interaction.user.id)) return interaction.reply({
+					content: "You do not have permission to use this command.",
+					ephemeral: true
+				});
+				// Run a lil db query to update every user's coins, dont bother sending a message to the user, it would take too long
+				await db.all(`SELECT * FROM points`, async (err, rows) => {
+					if (err) {
+						console.error(err);
+					}
+					if (!rows) return interaction.reply({
+						content: "It's quiet here...",
+						ephemeral: true
+					});
+					if (rows) {
+						for (let i = 0; i < rows.length; i++) {
+							checkAndModifyPoints(await client.users.fetch(rows[i].id), interaction.options.getNumber("amount"));
+						}
+						interaction.reply({
+							content: `Gave everyone ${interaction.options.getNumber("amount")} coins.`,
+							ephemeral: true
+						});
+					}
+				});
+				break;
+
 		case "transfer": // Allows a user to transfer a positive amount of coins to another user at a 50% tax, rounded down, if the user sends 2 coins, the other user will receive 1, the other gets sent to the abyss.
 			// check if the arguments are there
 			if (!interaction.options.getMember("user")) return interaction.reply({
@@ -237,7 +364,7 @@ client.on("interactionCreate", async interaction => {
 							color: 0xffff00,
 							description: `You received ${config.discord.coin}${amount} from ${interaction.user}.`
 						}]
-					}).catch(err => { });;
+					}).catch(err => { });
 					interaction.user.send({
 						embeds: [{
 							title: "Transfer Receipt",
@@ -330,6 +457,216 @@ client.on("interactionCreate", async interaction => {
 
 			interaction.reply(result.string);
 			break;
+		case "slots": // Play some slots, 1 minute cooldown
+			if (slotCooldowns[interaction.user.id]) {
+				if (slotCooldowns[interaction.user.id] > Date.now()) {
+					return interaction.reply({
+						content: "You can play again <t:" + Math.floor(slotCooldowns[interaction.user.id] / 1000) + ":R>.",
+						ephemeral: true
+					});
+				}
+			}
+
+			// Check if they have enough money to play, 3 coins, if they do take it and continue
+			let balance = await checkPoints(interaction.user);
+			if (balance < 3) return interaction.reply({
+				content: "You do not have enough coins to play slots.",
+				ephemeral: true
+			});
+			checkAndModifyPoints(interaction.user, -3);
+
+			// Get the slot results, yes it's pre-defined, but it's not like it matters
+			let slotResults = playSlotMachine();
+
+			await interaction.reply({
+				embeds: [{
+					title: "Slots",
+					description: `${config.games.slots.spinning}${config.games.slots.spinning}${config.games.slots.spinning}`,
+					color: 0xffff00
+				}]
+			});
+			// Wait 4 seconds, then one at a time change the slots, 1 second apart
+			setTimeout(async () => {
+				await interaction.editReply({
+					embeds: [{
+						title: "Slots",
+						description: `${slotResults.spinResult[0]}${config.games.slots.spinning}${config.games.slots.spinning}`,
+						color: 0xffff00
+					}]
+				}, 1000);
+				setTimeout(async () => {
+					await interaction.editReply({
+						embeds: [{
+							title: "Slots",
+							description: `${slotResults.spinResult[0]}${slotResults.spinResult[1]}${config.games.slots.spinning}`,
+							color: 0xffff00
+						}]
+					}, 1000);
+					setTimeout(async () => {
+						await interaction.editReply({
+							embeds: [{
+								title: "Slots",
+								description: `${slotResults.spinResult[0]}${slotResults.spinResult[1]}${slotResults.spinResult[2]}`,
+								color: 0xffff00
+							}]
+						});
+						// Check if they won or lost, if they won, give them the prize
+						if (slotResults.coinDifference > 0) {
+							await checkAndModifyPoints(interaction.user.id, slotResults.coinDifference);
+							if (slotResults.jackpot) {
+								return await interaction.editReply({
+									embeds: [{
+										title: "Jackpot!",
+										description: `:rotating_light: ${slotResults.spinResult[0]}${slotResults.spinResult[1]}${slotResults.spinResult[2]} :rotating_light:\nYou won the jackpot! (${slotResults.coinDifference} coins)`,
+										color: 0xffffff
+									}]
+								});
+							} else if (slotResults.triple) {
+								return await interaction.editReply({
+									embeds: [{
+										title: "Triple!",
+										description: `${slotResults.spinResult[0]}${slotResults.spinResult[1]}${slotResults.spinResult[2]}\nYou won ${slotResults.coinDifference} coins!`,
+										color: 0x00ffff
+									}]
+								});
+							} else {
+								await interaction.editReply({
+									embeds: [{
+										title: "Slots",
+										description: `${slotResults.spinResult[0]}${slotResults.spinResult[1]}${slotResults.spinResult[2]}\nYou won ${slotResults.coinDifference} coins!`,
+										color: 0x00ff00
+									}]
+								});
+							}
+						} else {
+							if (slotResults.bombs) {
+								// Triple bombs, very sad
+								await interaction.editReply({
+									embeds: [{
+										title: "Bombs!",
+										description: `${slotResults.spinResult[0]}${slotResults.spinResult[1]}${slotResults.spinResult[2]}\nYou lost ${Math.abs(slotResults.coinDifference)} coins!`,
+										color: 0xff0000
+									}]
+								});
+							} else {
+								await interaction.editReply({
+									embeds: [{
+										title: "Slots",
+										description: `${slotResults.spinResult[0]}${slotResults.spinResult[1]}${slotResults.spinResult[2]}\nYou lost ${Math.abs(slotResults.coinDifference)} coins!`,
+										color: 0xff0000
+									}]
+								});
+							}
+						}
+						// Set the cooldown for slots
+						slotCooldowns[interaction.user.id] = Date.now() + (config.games.slots.cooldown * 60 * 1000);
+					}, 1000);
+				}, 1000);
+			}, 4000);
+			break;
+		case "coinflip": // Coinflip game
+			/*
+			Minimum Bet: 1
+			Maximum Bet: 10
+			*/
+
+			// Check cooldown
+			if (coinflipCooldowns[interaction.user.id]) {
+				if (coinflipCooldowns[interaction.user.id] > Date.now()) {
+					return interaction.reply({
+						content: "You can play again <t:" + Math.floor(coinflipCooldowns[interaction.user.id] / 1000) + ":R>.",
+						ephemeral: true
+					});
+				}
+			}
+			coinflipCooldowns[interaction.user.id] = Date.now() + (config.games.coinflip.cooldown * 60 * 1000);
+
+			bet = parseInt(interaction.options.get("amount").value);
+			if (bet < 1 || bet > 10) return interaction.reply({
+				content: "You can only bet between 1 and 10 coins.",
+				ephemeral: true
+			});
+
+			// Check if they have enough coins
+			points = await checkPoints(interaction.user);
+			if (points < bet) return interaction.reply({
+				content: "You do not have enough coins to play coinflip.",
+				ephemeral: true
+			});
+
+			// Flip the coin
+			coin = Math.random() < 0.5 ? true : false;
+			before = await checkPoints(interaction.user);
+			// If they win, give them the prize, if they lose, take the prize
+			// if they lose inverse the bet
+			if (!coin) bet = -bet;
+			await checkAndModifyPoints(interaction.user, bet);
+			interaction.reply({
+				embeds: [{
+					title: "Coinflip",
+					description: `You flipped ${coin ? config.games.coinflip.heads : config.games.coinflip.tails} and **${coin ? "won" : "lost"}** ${Math.abs(bet)} coins!\nYou now have ${before + bet} coins.`,
+					color: coin ? 0x00ff00 : 0xff0000
+				}]
+			});
+			break;
+		case "snakeeyes": // Snakeeyes game
+			/*
+			Minimum Bet: 1
+			Maximum Bet: 10
+			roll a 6 sided dice, if the number lands on 1, you win.
+			If you win your bet will be tripled, if you lose you lose your entire bet.
+			*/
+
+			// Check cooldown
+			if (snakeeyesCooldowns[interaction.user.id]) {
+				if (snakeeyesCooldowns[interaction.user.id] > Date.now()) {
+					return interaction.reply({
+						content: "You can play again <t:" + Math.floor(snakeeyesCooldowns[interaction.user.id] / 1000) + ":R>.",
+						ephemeral: true
+					});
+				}
+			}
+			snakeeyesCooldowns[interaction.user.id] = Date.now() + (config.games.snakeeyes.cooldown * 60 * 1000);
+
+			bet = parseInt(interaction.options.get("amount").value);
+			if (bet < 1 || bet > 10) return interaction.reply({
+				content: "You can only bet between 1 and 10 coins.",
+				ephemeral: true
+			});
+
+			// Check if they have enough coins
+			points = await checkPoints(interaction.user);
+			if (points < bet) return interaction.reply({
+				content: "You do not have enough coins to play snakeeyes.",
+				ephemeral: true
+			});
+
+			// Roll the dice
+			dice = Math.floor(Math.random() * 6) + 1;
+			before = points;
+			// If they win, give them the prize, if they lose, take the prize
+			// if they lose inverse the bet
+			bet = new Number(bet);
+			if (dice == 1) {
+				await checkAndModifyPoints(interaction.user, bet * 3);
+				interaction.reply({
+					embeds: [{
+						title: "Snakeeyes",
+						description: `You rolled a ${config.games.snakeeyes.sides[dice - 1]} and **won** ${bet * 3} coins!\nYou now have ${before + (bet * 3)} coins.`,
+						color: 0x00ff00
+					}]
+				});
+			} else {
+				bet = -bet;
+				await checkAndModifyPoints(interaction.user, bet);
+				interaction.reply({
+					embeds: [{
+						title: "Snakeeyes",
+						description: `You rolled a ${config.games.snakeeyes.sides[dice - 1]} and **lost** ${Math.abs(bet)} coins!\nYou now have ${before + bet} coins.`,
+						color: 0xff0000
+					}]
+				});
+			}
 	};
 });
 
@@ -404,7 +741,80 @@ function playGame(gameName) {
 	return result;
 }
 
-var gameCooldowns = {};
+// Slots
+function playSlotMachine() {
+	const icons = ['🍒', '🍎', '🍋', '🍓', '⭐', '🌵', '💣'];
+
+	const getRandomIcon = () => icons[Math.floor(Math.random() * icons.length)];
+
+	const spinResult = [getRandomIcon(), getRandomIcon(), getRandomIcon()];
+
+	const iconCounts = spinResult.reduce((counts, icon) => {
+		counts[icon] = (counts[icon] || 0) + 1;
+		return counts;
+	}, {});
+
+	let coinDifference = -3; // Default coin difference for no match
+	let triple = false;
+	let jackpot = false;
+	let bombs = false;
+	if (iconCounts['🍎'] === 2) {
+		coinDifference = 3;
+	} else if (iconCounts['🍎'] === 3) {
+		triple = true;
+		coinDifference = 5;
+	} else if (iconCounts['🍋'] === 2) {
+		coinDifference = 4;
+	} else if (iconCounts['🍋'] === 3) {
+		triple = true;
+		coinDifference = 6;
+	} else if (iconCounts['🍒'] === 2) {
+		coinDifference = 5;
+	} else if (iconCounts['🍒'] === 3) {
+		triple = true;
+		coinDifference = 7;
+	} else if (iconCounts['🍓'] === 2) {
+		coinDifference = 7;
+	} else if (iconCounts['🍓'] === 3) {
+		triple = true;
+		coinDifference = 9;
+	} else if (iconCounts['⭐'] === 2) {
+		coinDifference = 8;
+	} else if (iconCounts['⭐'] === 3) {
+		triple = true;
+		coinDifference = 12;
+	} else if (iconCounts['🌵'] === 2) {
+		coinDifference = 9;
+	} else if (iconCounts['🌵'] === 3) {
+		jackpot = true;
+		coinDifference = 17;
+	} else if (iconCounts['💣'] === 2) {
+		bombs = true;
+		coinDifference = -7;
+	} else if (iconCounts['💣'] === 3) {
+		bombs = true;
+		coinDifference = -12;
+	}
+
+	if (iconCounts['💣'] === 1) {
+		bombs = true;
+		jackpot = false;
+		triple = false;
+		coinDifference = -5;
+	}
+
+	const result = {
+		jackpot,
+		triple,
+		bombs,
+		spinResult,
+		coinDifference
+	};
+
+	return result;
+}
+
+//return console.log(playSlotMachine())
 
 // Handle SIGINT gracefully
 process.on('SIGINT', async () => {
@@ -434,7 +844,10 @@ process.on('SIGINT', async () => {
 	}
 });*/
 
-
+var gameCooldowns = {};
+var slotCooldowns = {};
+var coinflipCooldowns = {};
+var snakeeyesCooldowns = {};
 
 console.log(`${colors.cyan("[INFO]")} Starting...`)
 // Start timer to see how long startup takes

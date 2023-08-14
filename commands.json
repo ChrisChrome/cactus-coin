@@ -1,7 +1,7 @@
 [
 	{
 		"name": "modify",
-		"description": "Modify a users points",
+		"description": "Modify a users coins",
 		"type": 1,
 		"options": [
 			{
@@ -26,7 +26,7 @@
 	},
 	{
 		"name": "give-all",
-		"description": "Give all users (who already have points) points",
+		"description": "Give all users (who already have coins) coins",
 		"type": 1,
 		"options": [
 			{
@@ -39,12 +39,12 @@
 	},
 	{
 		"name": "leaderboard",
-		"description": "Cactus points leaderboard",
+		"description": "Cactus coins leaderboard",
 		"type": 1
 	},
 	{
 		"name": "transfer",
-		"description": "Transfer points to another user (2:1 ratio)",
+		"description": "Transfer coins to another user (2:1 ratio)",
 		"type": 1,
 		"options": [
 			{
@@ -62,8 +62,8 @@
 		]
 	},
 	{
-		"name": "points",
-		"description": "Check the points of yourself or another user",
+		"name": "coins",
+		"description": "Check the coins of yourself or another user",
 		"type": 1,
 		"options": [
 			{
@@ -103,6 +103,91 @@
 						"value": "DIGGING"
 					}
 				]
+			}
+		]
+	},
+	{
+		"name": "slots",
+		"description": "Play the slots",
+		"type": 1
+	},
+	{
+		"name": "coinflip",
+		"description": "Flip a coin, try and win",
+		"type": 1,
+		"options": [
+			{
+				"name": "amount",
+				"description": "The amount to bet",
+				"type": 10,
+				"required": true
+			},
+			{
+				"name": "side",
+				"description": "The side to bet on",
+				"type": 3,
+				"required": true,
+				"choices": [
+					{
+						"name": "heads",
+						"value": "true"
+					},
+					{
+						"name": "tails",
+						"value": "false"
+					}
+				]
+			}
+		]
+	},
+	{
+		"name": "snakeeyes",
+		"description": "Roll a dice, try and get snake eyes",
+		"type": 1,
+		"options": [
+			{
+				"name": "amount",
+				"description": "The amount to bet",
+				"type": 10,
+				"required": true
+			}
+		]
+	},
+	{
+		"name": "modifyrandom",
+		"description": "Modify a random users coins",
+		"type": 1,
+		"options": [
+			{
+				"name": "type",
+				"description": "Where to get the random user from",
+				"type": 3,
+				"required": true,
+				"choices": [
+					{
+						"name": "database",
+						"value": "database"
+					}
+				]
+			},
+			{
+				"name": "amount",
+				"description": "The amount to modify (can be negative)",
+				"type": 10,
+				"required": true
+			}
+		]
+	},
+	{
+		"name": "modifyeveryone",
+		"description": "Modify everyones coins",
+		"type": 1,
+		"options": [
+			{
+				"name": "amount",
+				"description": "The amount to modify (can be negative)",
+				"type": 10,
+				"required": true
 			}
 		]
 	}
