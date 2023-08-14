@@ -129,11 +129,11 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-config.json
-config.json.old
-config.json.disabled
 .ssh/*
 !.ssh/.gitkeep
 testing/
 levels.db
 database.db
+config.json
+config.json.*
+!config.json.disabled
