@@ -102,23 +102,12 @@ client.on("interactionCreate", async interaction => {
 				user = interaction.user;
 			}
 			// Get user data
-			await db.get(`SELECT * FROM points WHERE id = '${user.id}'`, async (err, row) => {
-				if (err) {
-					console.error(err);
-				}
-				if (!row) return interaction.reply({
-					content: "This user does not have any coins.",
-					ephemeral: true
-				});
-				if (row) {
-					var data = row;
-					interaction.reply({
-						embeds: [{
-							title: `${user.username}'s Coins`,
-							description: `${config.discord.coin}${data.points}`,
-						}]
-					});
-				}
+			balance = await checkPoints(interaction.user);
+			interaction.reply({
+				embeds: [{
+					title: `${user.username}'s Coins`,
+					description: `${config.discord.coin}${balance}`,
+				}]
 			});
 			break;
 		case "leaderboard":
@@ -314,9 +303,18 @@ client.on("interactionCreate", async interaction => {
 			});
 
 			// Round the input up (these fuckers found a dupe one fucking day into the bot, fuck you krill issue)
-			let amount = Math.ceil(interaction.options.getNumber("amount"));
+			let amount = interaction.options.getNumber("amount");
 
-
+			balance = checkPoints(interaction.user);
+			if (balance < amount) return interaction.reply({
+				content: "You do not have enough coins.",
+				ephemeral: true
+			});
+			// If the user doesnt have any coins tell them.
+			if (balance == 0) return interaction.reply({
+				content: "You do not have any coins.",
+				ephemeral: true
+			});
 			// check if the user has enough coins
 			await db.get(`SELECT * FROM points WHERE id = '${interaction.user.id}'`, async (err, row) => {
 				if (err) {
@@ -331,25 +329,29 @@ client.on("interactionCreate", async interaction => {
 					ephemeral: true
 				});
 				if (row) {
-					if (row.points < amount) return interaction.reply({
+					if (balance < amount) return interaction.reply({
 						content: "You do not have enough coins.",
 						ephemeral: true
 					});
 					// If the user doesnt have any coins tell them.
-					if (row.points == 0) return interaction.reply({
+					if (balance == 0) return interaction.reply({
 						content: "You do not have any coins.",
 						ephemeral: true
 					});
 					// Now check if they have enough for the tax
-					if (row.points < Math.floor(amount * 2)) return interaction.reply({
-						content: "You do not have enough coins to pay the tax.",
+					if (balance < amount * .25) return interaction.reply({
+						content: `You do not have enough coins to pay the tax of ${config.discord.coin}${amount * .25}. You only have ${config.discord.coin}${balance}.`,
 						ephemeral: true
 					});
 					// At this point we know they have enough coins, so we can take them away, make sure to take the tax away too
-					checkAndModifyPoints(interaction.user, -Math.floor(amount * 2));
+					checkAndModifyPoints(interaction.user, -amount * .25);
 					// Now we can give the other user the coins
 					checkAndModifyPoints(interaction.options.getMember("user").user, amount);
 					// Now we can tell the user that it worked
+					// get the amount sent with 2 decimal places if it has a decimal
+					if (amount % 1 != 0) {
+						amount = amount.toFixed(2);
+					}
 					interaction.reply({
 						embeds: [{
 							title: "Transfer Successful",
@@ -429,7 +431,7 @@ client.on("interactionCreate", async interaction => {
 				content: "You are in debt, you cannot play games until you are out of debt.",
 				ephemeral: true
 			});
-			
+
 			let result = await playGame(interaction.options.getString("game"));
 			await checkAndModifyPoints(interaction.user, result.difference);
 			if (!gameCooldowns[interaction.user.id]) gameCooldowns[interaction.user.id] = {};
@@ -460,7 +462,7 @@ client.on("interactionCreate", async interaction => {
 			}
 
 			// Check if they have enough money to play, 3 coins, if they do take it and continue
-			let balance = await checkPoints(interaction.user);
+			balance = await checkPoints(interaction.user);
 			if (balance < 3) return interaction.reply({
 				content: "You do not have enough coins to play slots.",
 				ephemeral: true
@@ -505,7 +507,6 @@ client.on("interactionCreate", async interaction => {
 						// Check if they won or lost, if they won, give them the prize
 						difference = await new Number(slotResults.coinDifference);
 						await checkAndModifyPoints(interaction.user, difference);
-						newBal = await checkPoints(interaction.user);
 						if (difference > 0) {
 							await checkAndModifyPoints(interaction.user, 3);
 							if (slotResults.jackpot) {
