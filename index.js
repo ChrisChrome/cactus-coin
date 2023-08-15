@@ -606,14 +606,14 @@ client.on("interactionCreate", async interaction => {
 			if (coin == "heads") return interaction.reply({
 				embeds: [{
 					title: "Coinflip",
-					description: `You flipped ${config.games.coinflip.heads} and **${outcome ? "won" : "lost"}** ${Math.abs(bet)} coins!`,
+					description: `You flipped ${config.games.coinflip.heads} and **${outcome ? "won" : "lost"}** ${Math.abs(bet)} coins! You Chose: ${side}.`,
 					color: outcome ? 0x00ff00 : 0xff0000
 				}]
 			});
 			else if (coin == "tails") return interaction.reply({
 				embeds: [{
 					title: "Coinflip",
-					description: `You flipped ${config.games.coinflip.tails} and **${outcome ? "won" : "lost"}** ${Math.abs(bet)} coins!`,
+					description: `You flipped ${config.games.coinflip.tails} and **${outcome ? "won" : "lost"}** ${Math.abs(bet)} coins! You Chose: ${side}.`,
 					color: outcome ? 0x00ff00 : 0xff0000
 				}]
 			});
