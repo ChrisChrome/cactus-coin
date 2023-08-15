@@ -290,16 +290,21 @@ client.on("interactionCreate", async interaction => {
 				content: "You must specify an amount.",
 				ephemeral: true
 			});
-			// Sanity check to make sure they arent trying to send negative coins and break the economy
+			// Sanity check to make sure they aren't trying to send negative coins and break the economy
 			if (interaction.options.getNumber("amount") < 0) return interaction.reply({
 				content: "You cannot send negative coins you lil goober.",
+				ephemeral: true
+			});
+			// Check if they're trying to be funny and send money to themselves.
+			if (interaction.user.id == interaction.options.getMember("user").user.id) return interaction.reply({
+				content: "You can't send coins to yourself silly.",
 				ephemeral: true
 			});
 
 			// Round the input up (these fuckers found a dupe one fucking day into the bot, fuck you krill issue)
 			let amount = interaction.options.getNumber("amount");
 
-			balance = checkPoints(interaction.user);
+			balance = await checkPoints(interaction.user);
 			if (balance < amount) return interaction.reply({
 				content: "You do not have enough coins.",
 				ephemeral: true
