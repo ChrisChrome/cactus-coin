@@ -459,7 +459,6 @@ client.on("interactionCreate", async interaction => {
 					});
 				}
 			}
-			slotCooldowns[interaction.user.id] = Date.now() + (config.games.slots.cooldown * 60 * 1000);
 
 			// Check if they have enough money to play, 3 coins, if they do take it and continue
 			balance = await checkPoints(interaction.user);
@@ -470,7 +469,12 @@ client.on("interactionCreate", async interaction => {
 
 			// Get the slot results, yes it's pre-defined, but it's not like it matters
 			let slotResults = playSlotMachine();
-
+			// If there is a slotResults.cooldownOverride use that instead
+			if (slotResults.cooldownOverride) {
+				slotCooldowns[interaction.user.id] = Date.now() + (slotResults.cooldownOverride * 60 * 1000);
+			} else {
+				slotCooldowns[interaction.user.id] = Date.now() + (config.games.slots.cooldown * 60 * 1000);
+			}
 			await interaction.reply({
 				embeds: [{
 					title: "Slots",
@@ -755,55 +759,58 @@ function playSlotMachine() {
 	let jackpot = false;
 	let bombs = false;
 	if (iconCounts['🍎'] === 2) {
-        coinDifference = 1;
-    } else if (iconCounts['🍎'] === 3) {
-        triple = true;
-        coinDifference = 2;
-    } else if (iconCounts['🍋'] === 2) {
-        coinDifference = 3;
-    } else if (iconCounts['🍋'] === 3) {
-        triple = true;
-        coinDifference = 5;
-    } else if (iconCounts['🍒'] === 2) {
-        coinDifference = 5;
-    } else if (iconCounts['🍒'] === 3) {
-        triple = true;
-        coinDifference = 7;
-    } else if (iconCounts['🍓'] === 2) {
-        coinDifference = 7;
-    } else if (iconCounts['🍓'] === 3) {
-        triple = true;
-        coinDifference = 9;
-    } else if (iconCounts['⭐'] === 2) {
-        coinDifference = 9;
-    } else if (iconCounts['⭐'] === 3) {
-        triple = true;
-        coinDifference = 12;
-    } else if (iconCounts['🌵'] === 2) {
-        coinDifference = 9;
-    } else if (iconCounts['🌵'] === 3) {
-        jackpot = true;
-        coinDifference = 12;
-    } else if (iconCounts['💣'] === 2) {
-        bombs = true;
-        coinDifference = -5;
-    } else if (iconCounts['💣'] === 3) {
-        bombs = true;
-        coinDifference = -8;
-    }
+		coinDifference = 1;
+	} else if (iconCounts['🍎'] === 3) {
+		triple = true;
+		coinDifference = 2;
+	} else if (iconCounts['🍋'] === 2) {
+		coinDifference = 3;
+	} else if (iconCounts['🍋'] === 3) {
+		triple = true;
+		coinDifference = 5;
+	} else if (iconCounts['🍒'] === 2) {
+		coinDifference = 5;
+	} else if (iconCounts['🍒'] === 3) {
+		triple = true;
+		coinDifference = 7;
+	} else if (iconCounts['🍓'] === 2) {
+		coinDifference = 7;
+	} else if (iconCounts['🍓'] === 3) {
+		triple = true;
+		coinDifference = 9;
+	} else if (iconCounts['⭐'] === 2) {
+		coinDifference = 9;
+	} else if (iconCounts['⭐'] === 3) {
+		triple = true;
+		coinDifference = 12;
+	} else if (iconCounts['🌵'] === 2) {
+		coinDifference = 9;
+	} else if (iconCounts['🌵'] === 3) {
+		jackpot = true;
+		coinDifference = 12;
+	} else if (iconCounts['💣'] === 2) {
+		bombs = true;
+		coinDifference = -5;
+	} else if (iconCounts['💣'] === 3) {
+		bombs = true;
+		coinDifference = -8;
+	}
 
-    if (iconCounts['💣'] === 1) {
-        bombs = true;
-        jackpot = false;
-        triple = false;
-        coinDifference = -1;
-    }
+	if (iconCounts['💣'] === 1) {
+		bombs = true;
+		jackpot = false;
+		triple = false;
+		coinDifference = -1;
+	}
+
+	var cooldownOverride = 6 * iconCounts('💣'); // Change the cooldown to 6 minutes per bomb
 
 	const result = {
 		jackpot,
 		triple,
 		bombs,
 		spinResult,
+		cooldownOverride,
 		coinDifference
 	};
 
