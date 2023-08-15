@@ -130,11 +130,11 @@
 				"choices": [
 					{
 						"name": "heads",
-						"value": "true"
+						"value": "heads"
 					},
 					{
 						"name": "tails",
-						"value": "false"
+						"value": "tails"
 					}
 				]
 			}
