@@ -407,7 +407,7 @@ client.on("interactionCreate", async interaction => {
 				}
 			});
 			break;
-		case "play": // Allows a user to play a game to earn coins (or lose them)
+/*		case "play": // Allows a user to play a game to earn coins (or lose them)
 			if (gameCooldowns[interaction.user.id]) {
 				if (gameCooldowns[interaction.user.id][interaction.options.getString("game")]) {
 					let timesPlayed = gameCooldowns[interaction.user.id][interaction.options.getString("game")].timesPlayed;
@@ -450,7 +450,7 @@ client.on("interactionCreate", async interaction => {
 
 			interaction.reply(result.string);
 			break;
-		case "slots": // Play some slots, 1 minute cooldown
+		*/case "slots": // Play some slots, 1 minute cooldown
 			if (slotCooldowns[interaction.user.id]) {
 				if (slotCooldowns[interaction.user.id] > Date.now()) {
 					return interaction.reply({
