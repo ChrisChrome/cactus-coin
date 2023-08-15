@@ -595,17 +595,33 @@ client.on("interactionCreate", async interaction => {
 			});
 
 			// Flip the coin
-			coin = Math.random() < 0.5 ? true : false;
+			coin = Math.random() < 0.5 ? "heads" : "tails";
 			before = await checkPoints(interaction.user);
+			side = interaction.options.getString("side");
+			outcome = coin == side ? true : false;
 			// If they win, give them the prize, if they lose, take the prize
 			// if they lose inverse the bet
-			if (!coin) bet = -bet;
+			if (!outcome) bet = -bet;
 			await checkAndModifyPoints(interaction.user, bet);
-			interaction.reply({
+			if (coin == "heads") return interaction.reply({
 				embeds: [{
 					title: "Coinflip",
-					description: `You flipped ${coin ? config.games.coinflip.heads : config.games.coinflip.tails} and **${coin ? "won" : "lost"}** ${Math.abs(bet)} coins!`,
-					color: coin ? 0x00ff00 : 0xff0000
+					description: `You flipped ${config.games.coinflip.heads} and **${outcome ? "won" : "lost"}** ${Math.abs(bet)} coins!`,
+					color: outcome ? 0x00ff00 : 0xff0000
+				}]
+			});
+			else if (coin == "tails") return interaction.reply({
+				embeds: [{
+					title: "Coinflip",
+					description: `You flipped ${config.games.coinflip.tails} and **${outcome ? "won" : "lost"}** ${Math.abs(bet)} coins!`,
+					color: outcome ? 0x00ff00 : 0xff0000
+				}]
+			});
+			else return interaction.reply({
+				embeds: [{
+					title: "Something Went Wrong",
+					description: `The coin is neither heads nor tails, this shouldn't be possible!`,
+					color: 0xff0000
 				}]
 			});
 			break;
