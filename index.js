@@ -786,17 +786,17 @@ function playSlotMachine() {
         coinDifference = 12;
     } else if (iconCounts['💣'] === 2) {
         bombs = true;
-        coinDifference = -7;
+        coinDifference = -5;
     } else if (iconCounts['💣'] === 3) {
         bombs = true;
-        coinDifference = -12;
+        coinDifference = -8;
     }
 
     if (iconCounts['💣'] === 1) {
         bombs = true;
         jackpot = false;
         triple = false;
-        coinDifference = -5;
+        coinDifference = -1;
     }
 
 	const result = {
