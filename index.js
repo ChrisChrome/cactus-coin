@@ -579,7 +579,7 @@ client.on("interactionCreate", async interaction => {
 					});
 				}
 			}
-			coinflipCooldowns[interaction.user.id] = Date.now() + (config.games.coinflip.cooldown * 6 * 1000);
+			coinflipCooldowns[interaction.user.id] = Date.now() + (config.games.coinflip.cooldown * 60 * 1000);
 
 			bet = parseInt(interaction.options.get("amount").value);
 			if (bet < 1 || bet > 10) return interaction.reply({
@@ -606,14 +606,14 @@ client.on("interactionCreate", async interaction => {
 			if (coin == "heads") return interaction.reply({
 				embeds: [{
 					title: "Coinflip",
-					description: `You flipped ${config.games.coinflip.heads} and **${outcome ? "won" : "lost"}** ${Math.abs(bet)} coins! You Chose: ${side}.`,
+					description: `You flipped ${config.games.coinflip.heads} and **${outcome ? "won" : "lost"}** ${Math.abs(bet)} coins!`,
 					color: outcome ? 0x00ff00 : 0xff0000
 				}]
 			});
 			else if (coin == "tails") return interaction.reply({
 				embeds: [{
 					title: "Coinflip",
-					description: `You flipped ${config.games.coinflip.tails} and **${outcome ? "won" : "lost"}** ${Math.abs(bet)} coins! You Chose: ${side}.`,
+					description: `You flipped ${config.games.coinflip.tails} and **${outcome ? "won" : "lost"}** ${Math.abs(bet)} coins!`,
 					color: outcome ? 0x00ff00 : 0xff0000
 				}]
 			});
