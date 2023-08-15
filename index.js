@@ -579,7 +579,7 @@ client.on("interactionCreate", async interaction => {
 					});
 				}
 			}
-			coinflipCooldowns[interaction.user.id] = Date.now() + (config.games.coinflip.cooldown * 60 * 1000);
+			coinflipCooldowns[interaction.user.id] = Date.now() + (config.games.coinflip.cooldown * 6 * 1000);
 
 			bet = parseInt(interaction.options.get("amount").value);
 			if (bet < 1 || bet > 10) return interaction.reply({
