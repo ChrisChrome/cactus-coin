@@ -338,12 +338,12 @@ client.on("interactionCreate", async interaction => {
 						ephemeral: true
 					});
 					// Now check if they have enough for the tax
-					if (balance < amount * .25) return interaction.reply({
-						content: `You do not have enough coins to pay the tax of ${config.discord.coin}${amount * .25}. You only have ${config.discord.coin}${balance}.`,
+					if (balance < amount * 2) return interaction.reply({
+						content: `You do not have enough coins to pay the tax of ${config.discord.coin}${amount}. You only have ${config.discord.coin}${balance}.`,
 						ephemeral: true
 					});
 					// At this point we know they have enough coins, so we can take them away, make sure to take the tax away too
-					checkAndModifyPoints(interaction.user, -amount * .25);
+					checkAndModifyPoints(interaction.user, -amount * 2);
 					// Now we can give the other user the coins
 					checkAndModifyPoints(interaction.options.getMember("user").user, amount);
 					// Now we can tell the user that it worked
