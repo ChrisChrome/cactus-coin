@@ -1,0 +1,27 @@
+{
+	"name": "play",
+	"description": "Play a minigame",
+	"type": 1,
+	"options": [
+		{
+			"name": "game",
+			"description": "The game to play",
+			"type": 3,
+			"required": true,
+			"choices": [
+				{
+					"name": "fishing",
+					"value": "FISHING"
+				},
+				{
+					"name": "hunting",
+					"value": "HUNTING"
+				},
+				{
+					"name": "digging",
+					"value": "DIGGING"
+				}
+			]
+		}
+	]
+}
