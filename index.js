@@ -424,15 +424,6 @@ client.on("interactionCreate", async interaction => {
 					}
 				}
 			}
-			// Check if they're in debt, if they are dont let them play
-			balance = await checkPoints(interaction.user);
-			if (balance < 0) return interaction.reply({
-				content: "You are in debt, you cannot play games until you are out of debt.",
-				ephemeral: true
-			});
-
-			let result = await playGame(interaction.options.getString("game"));
-			await checkAndModifyPoints(interaction.user, result.difference);
 			if (!gameCooldowns[interaction.user.id]) gameCooldowns[interaction.user.id] = {};
 			if (!gameCooldowns[interaction.user.id][interaction.options.getString("game")]) {
 				gameCooldowns[interaction.user.id][interaction.options.getString("game")] = {
@@ -448,6 +439,15 @@ client.on("interactionCreate", async interaction => {
 				};
 			}
 
+			// Check if they're in debt, if they are dont let them play
+			balance = await checkPoints(interaction.user);
+			if (balance < 0) return interaction.reply({
+				content: "You are in debt, you cannot play games until you are out of debt.",
+				ephemeral: true
+			});
+
+			let result = await playGame(interaction.options.getString("game"));
+			await checkAndModifyPoints(interaction.user, result.difference);
 			interaction.reply(result.string);
 			break;
 		*/case "slots": // Play some slots, 1 minute cooldown
@@ -819,7 +819,7 @@ function playSlotMachine() {
 		coinDifference = -1;
 	}
 
-	var cooldownOverride = 6 * iconCounts('💣'); // Change the cooldown to 6 minutes per bomb
+	var cooldownOverride = 6 * iconCounts['💣']; // Change the cooldown to 6 minutes per bomb
 
 	const result = {
 		jackpot,
@@ -832,6 +832,21 @@ function playSlotMachine() {
 
 	return result;
 }
+
+const rockPaperScissors = (userChoice) => {
+	const choices = ['🪨', '📄', '✂️'];
+	const botChoice = choices[Math.floor(Math.random() * choices.length)];
+
+	if (userChoice === botChoice) return 'It\'s a tie!';
+	else if (
+		(userChoice === '🪨' && botChoice === '✂️') ||
+		(userChoice === '📄' && botChoice === '🪨') ||
+		(userChoice === '✂️' && botChoice === '📄')
+	) {
+		return 'You won!';
+	}
+	else return 'You lost!';
+};
 
 //return console.log(playSlotMachine())
 
