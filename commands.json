@@ -214,5 +214,10 @@
 		"name": "weekly",
 		"description": "Claim your weekly coins",
 		"type": 1
+	},
+	{
+		"name": "wordscramble",
+		"description": "Trigger a word scramble (admin only)",
+		"type": 1,
 	}
 ]
