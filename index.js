@@ -803,8 +803,8 @@ client.on('messageCreate', async message => {
 		if (curCooldown) {
 			return;
 		}
-		// 1 in 100 chance to start a word scramble
-		if (Math.random() < 0.01) {
+		// 1 in 50 chance to start a word scramble
+		if (Math.floor(Math.random() * 10) == 0) {
 			// Start a word scramble
 			setCooldown({id: 0}, "wordscramble", 5 * 60 * 1000)
 			gameData = wordScramble();
