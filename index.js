@@ -727,6 +727,46 @@ client.on("interactionCreate", async interaction => {
 					}]
 				});
 			}
+			break;
+		case "daily": // Daily 2 coins
+			curCooldown = await checkCooldown(interaction.user, "daily")
+			if (curCooldown) {
+				return interaction.reply({
+					content: `Check back <t:${Math.floor(await checkCooldown(interaction.user, "daily") / 1000)}:R>.`,
+					ephemeral: true
+				});
+			}
+			// 24 hours
+			setCooldown(interaction.user, "daily", 24 * 60 * 60 * 1000)
+			await checkAndModifyPoints(interaction.user, 2);
+			interaction.reply({
+				embeds: [{
+					title: "Daily",
+					description: `You got 2 coins!`,
+					color: 0x00ff00
+				}]
+			});
+			break;
+		case "weekly": // Weekly 14 coins
+			curCooldown = await checkCooldown(interaction.user, "weekly")
+			if (curCooldown) {
+				return interaction.reply({
+					content: `Check back <t:${Math.floor(await checkCooldown(interaction.user, "weekly") / 1000)}:R>.`,
+					ephemeral: true
+				});
+			}
+			// 7 days
+			setCooldown(interaction.user, "weekly", 7 * 24 * 60 * 60 * 1000)
+			await checkAndModifyPoints(interaction.user, 14);
+			interaction.reply({
+				embeds: [{
+					title: "Weekly",
+					description: `You got 14 coins!`,
+					color: 0x00ff00
+				}]
+			});
+			break;
+
 	};
 });
 

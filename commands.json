@@ -204,5 +204,15 @@
 				"required": true
 			}
 		]
+	},
+	{
+		"name": "daily",
+		"description": "Claim your daily coins",
+		"type": 1
+	},
+	{
+		"name": "weekly",
+		"description": "Claim your weekly coins",
+		"type": 1
 	}
 ]
