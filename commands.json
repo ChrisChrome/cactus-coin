@@ -40,7 +40,21 @@
 	{
 		"name": "leaderboard",
 		"description": "Cactus coins leaderboard",
-		"type": 1
+		"type": 1,
+		"options": [
+			{
+				"name": "type",
+				"description": "Optional leaderboard type",
+				"type": 3,
+				"required": false,
+				"choices": [
+					{
+						"name": "Inverse",
+						"value": "ASC"
+					}
+				]
+			}
+		]
 	},
 	{
 		"name": "transfer",

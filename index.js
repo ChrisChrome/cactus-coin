@@ -105,7 +105,9 @@ client.on("interactionCreate", async interaction => {
 			});
 			break;
 		case "leaderboard":
-			await db.all(`SELECT * FROM points ORDER BY points DESC`, async (err, rows) => {
+			// Get the type option, if its "inverted" then order by points ASC, if its not set then order by points DESC
+			let type = interaction.options.getString("type") || "DESC";
+			await db.all(`SELECT * FROM points ORDER BY points ${type}`, async (err, rows) => {
 				if (err) {
 					console.error(err);
 				}
