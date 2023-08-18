@@ -131,7 +131,7 @@ client.on("interactionCreate", async interaction => {
 						if (rows[i]) {
 							let user = await client.users.fetch(rows[i].id);
 							let lvl = rows[i].lvl;
-							leaderboard.push(`${i + 1}. <@${user.id}> - ${config.discord.coin}${rows[i].points}`);
+							leaderboard.push(`${i + 1}. <@${user.id}> • ${config.discord.coin}${rows[i].points}`);
 						}
 					}
 					interaction.reply({
