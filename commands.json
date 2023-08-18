@@ -218,6 +218,6 @@
 	{
 		"name": "wordscramble",
 		"description": "Trigger a word scramble (admin only)",
-		"type": 1,
+		"type": 1
 	}
 ]
