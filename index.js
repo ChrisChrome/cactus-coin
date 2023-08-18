@@ -107,6 +107,15 @@ client.on("interactionCreate", async interaction => {
 		case "leaderboard":
 			// Get the type option, if its "inverted" then order by points ASC, if its not set then order by points DESC
 			let type = interaction.options.getString("type") || "DESC";
+			// Switch type for the header of the embed
+			switch (type) {
+				case "DESC":
+					header = "Leaderboard";
+					break;
+				case "ASC":
+					header = "Inverted Leaderboard";
+					break;
+			}
 			await db.all(`SELECT * FROM points ORDER BY points ${type}`, async (err, rows) => {
 				if (err) {
 					console.error(err);
@@ -127,7 +136,7 @@ client.on("interactionCreate", async interaction => {
 					}
 					interaction.reply({
 						embeds: [{
-							title: "Leaderboard",
+							title: header,
 							description: leaderboard.join("\n"),
 							color: 0x00ff00
 						}]
