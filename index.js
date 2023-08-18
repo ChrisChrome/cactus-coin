@@ -32,7 +32,7 @@ client.on("ready", async () => {
 	await (async () => {
 		try {
 			console.log(`${colors.cyan("[INFO]")} Registering Commands...`)
-			let start = Date.now()
+			start = Date.now()
 			// Global commands
 			await rest.put(Discord.Routes.applicationCommands(client.user.id), {
 				body: commands
@@ -164,7 +164,7 @@ client.on("interactionCreate", async interaction => {
 			break;
 		case "leaderboard":
 			// Get the type option, if its "inverted" then order by points ASC, if its not set then order by points DESC
-			let type = interaction.options.getString("type") || "DESC";
+			type = interaction.options.getString("type") || "DESC";
 			// Switch type for the header of the embed
 			switch (type) {
 				case "DESC":
@@ -183,12 +183,12 @@ client.on("interactionCreate", async interaction => {
 					ephemeral: true
 				});
 				if (rows) {
-					let leaderboard = [];
+					leaderboard = [];
 					// Top 10
 					for (let i = 0; i < 10; i++) {
 						if (rows[i]) {
-							let user = await client.users.fetch(rows[i].id);
-							let lvl = rows[i].lvl;
+							user = await client.users.fetch(rows[i].id);
+							lvl = rows[i].lvl;
 							leaderboard.push(`${i + 1}. <@${user.id}> • ${config.discord.coin} ${rows[i].points}`);
 						}
 					}
@@ -209,14 +209,14 @@ client.on("interactionCreate", async interaction => {
 				content: "You do not have permission to use this command.",
 				ephemeral: true
 			});
-			let outputStatus = await checkAndModifyPoints(interaction.options.getMember("user").user, interaction.options.getNumber("amount"), interaction.options.getBoolean("override") || false);
+			outputStatus = await checkAndModifyPoints(interaction.options.getMember("user").user, interaction.options.getNumber("amount"), interaction.options.getBoolean("override") || false);
 			if (outputStatus !== false) {
 				interaction.reply({
 					content: `Gave ${interaction.options.getMember("user").user.username} ${interaction.options.getNumber("amount")} coins.`,
 					ephemeral: true
 				});
 				// add + or - to the amount
-				let amount = interaction.options.getNumber("amount");
+				amount = interaction.options.getNumber("amount");
 				if (amount > 0) {
 					amount = `+${amount}`;
 				}
@@ -256,16 +256,16 @@ client.on("interactionCreate", async interaction => {
 							ephemeral: true
 						});
 						if (rows) {
-							let randomUser = await rows[Math.floor(Math.random() * rows.length)];
+							randomUser = await rows[Math.floor(Math.random() * rows.length)];
 							randomUser = await client.users.fetch(randomUser.id);
-							let outputStatus = await checkAndModifyPoints(await client.users.fetch(randomUser.id), interaction.options.getNumber("amount"));
+							outputStatus = await checkAndModifyPoints(await client.users.fetch(randomUser.id), interaction.options.getNumber("amount"));
 							if (outputStatus !== false) {
 								interaction.reply({
 									content: `Gave ${await client.users.fetch(randomUser.id)} ${interaction.options.getNumber("amount")} coins.`,
 									ephemeral: true
 								});
 								// add + or - to the amount
-								let amount = interaction.options.getNumber("amount");
+								amount = interaction.options.getNumber("amount");
 								if (amount > 0) {
 									amount = `+${amount}`;
 								}
@@ -291,16 +291,16 @@ client.on("interactionCreate", async interaction => {
 				case "guild":
 					// Get a random user from the guild
 					await interaction.guild.members.fetch();
-					let userList = await interaction.guild.members.cache.filter(member => !member.user.bot);
-					let randomUser = await userList[Math.floor(Math.random() * userList.length)];
-					let outputStatus = await checkAndModifyPoints(randomUser.user, interaction.options.getNumber("amount"));
+					userList = await interaction.guild.members.cache.filter(member => !member.user.bot);
+					randomUser = await userList[Math.floor(Math.random() * userList.length)];
+					outputStatus = await checkAndModifyPoints(randomUser.user, interaction.options.getNumber("amount"));
 					if (outputStatus !== false) {
 						interaction.reply({
 							content: `Gave ${randomUser.user.username} ${interaction.options.getNumber("amount")} coins.`,
 							ephemeral: true
 						});
 						// add + or - to the amount
-						let amount = interaction.options.getNumber("amount");
+						amount = interaction.options.getNumber("amount");
 						if (amount > 0) {
 							amount = `+${amount}`;
 						}
@@ -371,7 +371,7 @@ client.on("interactionCreate", async interaction => {
 			});
 
 			// Round the input up (these fuckers found a dupe one fucking day into the bot, fuck you krill issue)
-			let amount = interaction.options.getNumber("amount");
+			amount = interaction.options.getNumber("amount");
 
 			balance = await checkPoints(interaction.user);
 			if (balance < amount) return interaction.reply({
@@ -460,9 +460,9 @@ client.on("interactionCreate", async interaction => {
 					ephemeral: true
 				});
 				if (rows) {
-					let ledger = [];
+					ledger = [];
 					for (let i = 0; i < rows.length; i++) {
-						let user = await client.users.fetch(rows[i].id);
+						user = await client.users.fetch(rows[i].id);
 						if (rows[i].points == 0) continue;
 						ledger.push(`${user.username} - ${rows[i].points}`);
 					}
@@ -493,7 +493,7 @@ client.on("interactionCreate", async interaction => {
 				ephemeral: true
 			});
 
-			let result = await playGame(interaction.options.getString("game"));
+			result = await playGame(interaction.options.getString("game"));
 			await checkAndModifyPoints(interaction.user, result.difference);
 			interaction.reply(result.string);
 			break;
@@ -514,7 +514,7 @@ client.on("interactionCreate", async interaction => {
 			});
 
 			// Get the slot results, yes it's pre-defined, but it's not like it matters
-			let slotResults = playSlotMachine();
+			slotResults = playSlotMachine();
 			// If there is a slotResults.cooldownOverride use that instead
 			if (slotResults.cooldownOverride) {
 				setCooldown(interaction.user, "slots", slotResults.cooldownOverride * 60 * 1000)
@@ -798,7 +798,7 @@ client.on("interactionCreate", async interaction => {
 			interaction.reply({
 				content: "Word scramble started.",
 				ephemeral: true
-			})
+			z})
 			// Set a timer for 30 seconds, if the word isn't guessed by then, delete the wordScrambles object
 			wordScrambles[interaction.channel.id].timer = setTimeout(() => {
 				interaction.channel.send({
@@ -882,8 +882,8 @@ client.on('messageCreate', async message => {
 
 function wordScramble() {
 	// Get a random word from config.games.wordscramble.words then scramble it
-	let word = config.games.wordscramble.words[Math.floor(Math.random() * config.games.wordscramble.words.length)];
-	let scrambledWord = word.split('').sort(function () {
+	word = config.games.wordscramble.words[Math.floor(Math.random() * config.games.wordscramble.words.length)];
+	scrambledWord = word.split('').sort(function () {
 		// Fully scramble the word 3 times to be safe
 		return 0.5 - Math.random();
 	}).sort(function () {
@@ -906,7 +906,7 @@ function wordScramble() {
 // Game function
 function playGame(gameName) {
 	const randomNumber = Math.random() * 100;
-	let result = {
+	result = {
 		string: "",
 		difference: 0
 	};
@@ -987,10 +987,10 @@ function playSlotMachine() {
 		return counts;
 	}, {});
 
-	let coinDifference = 0; // Default coin difference for no match, they just lose the play cost
-	let triple = false;
-	let jackpot = false;
-	let bombs = false;
+	coinDifference = 0; // Default coin difference for no match, they just lose the play cost
+	triple = false;
+	jackpot = false;
+	bombs = false;
 	if (iconCounts['🍎'] === 2) {
 		coinDifference = 1;
 	} else if (iconCounts['🍎'] === 3) {
