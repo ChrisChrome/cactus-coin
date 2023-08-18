@@ -833,7 +833,6 @@ client.on('messageCreate', async message => {
 			});
 		}
 	}
-	console.log("test")
 	setCooldown({id: 0}, "wordscramble", 1 * 60 * 1000)
 });
 
