@@ -9,7 +9,9 @@ const colors = require("colors");
 const client = new Discord.Client({
 	intents: [
 		"GuildMembers",
-		"Guilds"
+		"Guilds",
+		"GuildMessages",
+		"MessageContent"
 	]
 });
 
@@ -20,6 +22,7 @@ const db = new sqlite3.Database("./database.db");
 
 // Create table if it doesn't exist
 db.run("CREATE TABLE IF NOT EXISTS points (id TEXT, points INTEGER)");
+db.run("CREATE TABLE IF NOT EXISTS cooldowns (id TEXT, type TEXT, cooldown TEXT)");
 
 client.on("ready", async () => {
 	console.log(`${colors.cyan("[INFO]")} Logged in as ${colors.green(client.user.tag)}`)
@@ -85,6 +88,61 @@ checkPoints = (user) => {
 			}
 			if (row) {
 				resolve(row.points);
+			}
+		});
+	});
+}
+
+checkCooldown = (user, type) => {
+	// Needs to be awaited
+	return new Promise((resolve, reject) => {
+		// If they are still within the cooldown period return true, if not return false
+		db.get(`SELECT * FROM cooldowns WHERE id = '${user.id}' AND type = '${type}'`, async (err, row) => {
+			if (err) {
+				console.error(err);
+				reject(err);
+			}
+			if (!row) {
+				resolve(false);
+			}
+			if (row) {
+				if (row.cooldown > Date.now()) {
+					resolve(row.cooldown);
+				} else {
+					resolve(false);
+				}
+			}
+		});
+	});
+}
+
+setCooldown = (user, type, cooldown) => {
+	// Needs to be awaited
+	return new Promise((resolve, reject) => {
+		// If any error occurs reject, otherwise return true
+		// check if the user and type combo exists, if it does update it, if it doesnt create it
+		db.get(`SELECT * FROM cooldowns WHERE id = '${user.id}' AND type = '${type}'`, async (err, row) => {
+			if (err) {
+				console.error(err);
+				reject(err);
+			}
+			if (!row) {
+				await db.run(`INSERT INTO cooldowns (id, type, cooldown) VALUES ('${user.id}', '${type}', '${Date.now() + cooldown}')`, (err) => {
+					if (err) {
+						console.error(err);
+						reject(err);
+					}
+					resolve(true);
+				});
+			}
+			if (row) {
+				await db.run(`UPDATE cooldowns SET cooldown = '${Date.now() + cooldown}' WHERE id = '${user.id}' AND type = '${type}'`, (err) => {
+					if (err) {
+						console.error(err);
+						reject(err);
+					}
+					resolve(true);
+				});
 			}
 		});
 	});
@@ -419,36 +477,14 @@ client.on("interactionCreate", async interaction => {
 			});
 			break;
 		case "play": // Allows a user to play a game to earn coins (or lose them)
-			if (gameCooldowns[interaction.user.id]) {
-				if (gameCooldowns[interaction.user.id][interaction.options.getString("game")]) {
-					let timesPlayed = gameCooldowns[interaction.user.id][interaction.options.getString("game")].timesPlayed;
-					let unlock = gameCooldowns[interaction.user.id][interaction.options.getString("game")].unlock;
-					if (timesPlayed >= config.games.gamesPerPeriod) {
-						if (unlock < Date.now()) {
-							delete gameCooldowns[interaction.user.id][interaction.options.getString("game")];
-						} else {
-							return interaction.reply({
-								content: `You can play again in <t:${Math.floor(unlock / 1000)}:R>.`,
-								ephemeral: true
-							});
-						}
-					}
-				}
+			curCooldown = await checkCooldown(interaction.user, interaction.options.getString("game"))
+			if (curCooldown) {
+				return interaction.reply({
+					content: `You can play again <t:${Math.floor(await checkCooldown(interaction.user, interaction.options.getString("game")) / 1000)}:R>.`,
+					ephemeral: true
+				});
 			}
-			if (!gameCooldowns[interaction.user.id]) gameCooldowns[interaction.user.id] = {};
-			if (!gameCooldowns[interaction.user.id][interaction.options.getString("game")]) {
-				gameCooldowns[interaction.user.id][interaction.options.getString("game")] = {
-					timesPlayed: 1,
-					unlock: Date.now() + (config.games.waitPeriod * 60 * 1000)
-				};
-			} else {
-				let timesPlayed = gameCooldowns[interaction.user.id][interaction.options.getString("game")].timesPlayed;
-				// Add the cooldown from config.games.waitPeriod
-				gameCooldowns[interaction.user.id][interaction.options.getString("game")] = {
-					timesPlayed: timesPlayed + 1,
-					unlock: Date.now() + (config.games.waitPeriod * 60 * 1000)
-				};
-			}
+			setCooldown(interaction.user, interaction.options.getString("game"), config.games.waitPeriod * 60 * 1000);
 
 			// Check if they're in debt, if they are dont let them play
 			balance = await checkPoints(interaction.user);
@@ -462,13 +498,12 @@ client.on("interactionCreate", async interaction => {
 			interaction.reply(result.string);
 			break;
 		case "slots": // Play some slots, 1 minute cooldown
-			if (slotCooldowns[interaction.user.id]) {
-				if (slotCooldowns[interaction.user.id] > Date.now()) {
-					return interaction.reply({
-						content: "You can play again <t:" + Math.floor(slotCooldowns[interaction.user.id] / 1000) + ":R>.",
-						ephemeral: true
-					});
-				}
+			curCooldown = await checkCooldown(interaction.user, "slots")
+			if (curCooldown) {
+				return interaction.reply({
+					content: `You can play again <t:${Math.floor(await checkCooldown(interaction.user, "slots") / 1000)}:R>.`,
+					ephemeral: true
+				});
 			}
 
 			// Check if they have enough money to play, 3 coins, if they do take it and continue
@@ -482,9 +517,9 @@ client.on("interactionCreate", async interaction => {
 			let slotResults = playSlotMachine();
 			// If there is a slotResults.cooldownOverride use that instead
 			if (slotResults.cooldownOverride) {
-				slotCooldowns[interaction.user.id] = Date.now() + (slotResults.cooldownOverride * 60 * 1000);
+				setCooldown(interaction.user, "slots", slotResults.cooldownOverride * 60 * 1000)
 			} else {
-				slotCooldowns[interaction.user.id] = Date.now() + (config.games.slots.cooldown * 60 * 1000);
+				setCooldown(interaction.user, "slots", config.games.slots.cooldown * 60 * 1000)
 			}
 			await interaction.reply({
 				embeds: [{
@@ -582,15 +617,14 @@ client.on("interactionCreate", async interaction => {
 			*/
 
 			// Check cooldown
-			if (coinflipCooldowns[interaction.user.id]) {
-				if (coinflipCooldowns[interaction.user.id] > Date.now()) {
-					return interaction.reply({
-						content: "You can play again <t:" + Math.floor(coinflipCooldowns[interaction.user.id] / 1000) + ":R>.",
-						ephemeral: true
-					});
-				}
+			curCooldown = await checkCooldown(interaction.user, "coinflip")
+			if (curCooldown) {
+				return interaction.reply({
+					content: `You can play again <t:${Math.floor(await checkCooldown(interaction.user, "coinflip") / 1000)}:R>.`,
+					ephemeral: true
+				});
 			}
-			coinflipCooldowns[interaction.user.id] = Date.now() + (config.games.coinflip.cooldown * 60 * 1000);
+			setCooldown(interaction.user, "coinflip", config.games.coinflip.cooldown * 60 * 1000)
 
 			bet = parseInt(interaction.options.get("amount").value);
 			if (bet < 1 || bet > 10) return interaction.reply({
@@ -645,15 +679,14 @@ client.on("interactionCreate", async interaction => {
 			*/
 
 			// Check cooldown
-			if (snakeeyesCooldowns[interaction.user.id]) {
-				if (snakeeyesCooldowns[interaction.user.id] > Date.now()) {
-					return interaction.reply({
-						content: "You can play again <t:" + Math.floor(snakeeyesCooldowns[interaction.user.id] / 1000) + ":R>.",
-						ephemeral: true
-					});
-				}
+			curCooldown = await checkCooldown(interaction.user, "snakeeyes")
+			if (curCooldown) {
+				return interaction.reply({
+					content: `You can play again <t:${Math.floor(await checkCooldown(interaction.user, "snakeeyes") / 1000)}:R>.`,
+					ephemeral: true
+				});
 			}
-			snakeeyesCooldowns[interaction.user.id] = Date.now() + (config.games.snakeeyes.cooldown * 60 * 1000);
+			setCooldown(interaction.user, "snakeeyes", config.games.snakeeyes.cooldown * 60 * 1000)
 
 			bet = parseInt(interaction.options.get("amount").value);
 			if (bet < 1 || bet > 10) return interaction.reply({
@@ -696,6 +729,96 @@ client.on("interactionCreate", async interaction => {
 			}
 	};
 });
+
+var wordScrambles = {}
+
+client.on('messageCreate', async message => {
+	if (message.author.bot) return;
+	if (!message.guild) return;
+	if (message.channel.type == "dm") return;
+	if (config.games.wordscramble.blacklist.includes(message.channel.id)) return;
+	// Check if the channel already has a word scramble going
+	if (wordScrambles[message.channel.id]) {
+		if (wordScrambles[message.channel.id].badGuesses.includes(message.author.id)) return;
+		// Check if the message is the correct answer
+		if (message.content.toLowerCase() == wordScrambles[message.channel.id].word.toLowerCase()) {
+			// Give the user a point
+			await checkAndModifyPoints(message.author, 2);
+			// Send the message
+			message.channel.send({
+				embeds: [{
+					title: "Word Scramble",
+					description: `**${message.author}** got the word **${wordScrambles[message.channel.id].word}**!\nYou got 2 coins!`,
+					color: 0x00ff00
+				}]
+			});
+			clearTimeout(wordScrambles[message.channel.id].timer)
+			// Delete the wordScrambles object
+			delete wordScrambles[message.channel.id];
+		} else {
+			wordScrambles[message.channel.id].badGuesses.push(message.author.id);
+		}
+	} else {
+		curCooldown = await checkCooldown({id: 0}, "wordscramble")
+		if (curCooldown) {
+			return;
+		}
+		// 1 in 100 chance to start a word scramble
+		if (Math.random() < 0.01) {
+			// Start a word scramble
+			setCooldown({id: 0}, "wordscramble", 5 * 60 * 1000)
+			gameData = wordScramble();
+			wordScrambles[message.channel.id] = {
+				word: gameData.word,
+				scrambledWord: gameData.scrambledWord,
+				badGuesses: []
+			}
+			return message.channel.send({
+				embeds: [{
+					title: "Word Scramble",
+					description: `Unscramble the word **${gameData.scrambledWord}**!`,
+					color: 0xffff00
+				}]
+			});
+			// Set a timer for 30 seconds, if the word isn't guessed by then, delete the wordScrambles object
+			wordScrambles[message.channel.id].timer = setTimeout(() => {
+				message.channel.send({
+					embeds: [{
+						title: "Word Scramble",
+						description: `The word was **${wordScrambles[message.channel.id].word}**!`,
+						color: 0xff0000
+					}]
+				});
+				delete wordScrambles[message.channel.id];
+			});
+		}
+	}
+	console.log("test")
+	setCooldown({id: 0}, "wordscramble", 1 * 60 * 1000)
+});
+
+function wordScramble() {
+	// Get a random word from config.games.wordscramble.words then scramble it
+	let word = config.games.wordscramble.words[Math.floor(Math.random() * config.games.wordscramble.words.length)];
+	let scrambledWord = word.split('').sort(function () {
+		// Fully scramble the word 3 times to be safe
+		return 0.5 - Math.random();
+	}).sort(function () {
+		return 0.5 - Math.random();
+	}).join('');
+	// if the scrambled word is the same as the word, scramble it again
+	if (scrambledWord == word) {
+		scrambledWord = word.split('').sort(function () {
+			return 0.5 - Math.random();
+		}).sort(function () {
+			return 0.5 - Math.random();
+		}).join('');
+	}
+	return {
+		word: word,
+		scrambledWord: scrambledWord
+	};
+}
 
 // Game function
 function playGame(gameName) {
@@ -888,11 +1011,6 @@ process.on('SIGINT', async () => {
 		});
 	}
 });*/
-
-var gameCooldowns = {};
-var slotCooldowns = {};
-var coinflipCooldowns = {};
-var snakeeyesCooldowns = {};
 
 console.log(`${colors.cyan("[INFO]")} Starting...`)
 // Start timer to see how long startup takes
