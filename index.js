@@ -766,7 +766,47 @@ client.on("interactionCreate", async interaction => {
 				}]
 			});
 			break;
+		case "wordscramble": // Word Scramble game (admin only)
+			// check if the user is in the config.discord.givers array
+			if (!config.discord.givers.includes(interaction.user.id)) return interaction.reply({
+				content: "You do not have permission to use this command.",
+				ephemeral: true
+			});
 
+			// Check if the channel already has a word scramble going
+			if (wordScrambles[interaction.channel.id]) {
+				return interaction.reply({
+					content: "There is already a word scramble going in this channel.",
+					ephemeral: true
+				});
+			}
+
+			// Start a word scramble
+			gameData = wordScramble();
+			wordScrambles[interaction.channel.id] = {
+				word: gameData.word,
+				scrambledWord: gameData.scrambledWord,
+				badGuesses: []
+			}
+			interaction.channel.send({
+				embeds: [{
+					title: "Word Scramble",
+					description: `Unscramble the word **${gameData.scrambledWord}**!`,
+					color: 0xffff00
+				}]
+			});
+			// Set a timer for 30 seconds, if the word isn't guessed by then, delete the wordScrambles object
+			wordScrambles[interaction.channel.id].timer = setTimeout(() => {
+				interaction.channel.send({
+					embeds: [{
+						title: "Word Scramble",
+						description: `The word was **${wordScrambles[interaction.channel.id].word}**!`,
+						color: 0xff0000
+					}]
+				});
+				delete wordScrambles[interaction.channel.id];
+			}, 30 * 1000);
+			break;
 	};
 });
 
@@ -813,7 +853,7 @@ client.on('messageCreate', async message => {
 				scrambledWord: gameData.scrambledWord,
 				badGuesses: []
 			}
-			return message.channel.send({
+			message.channel.send({
 				embeds: [{
 					title: "Word Scramble",
 					description: `Unscramble the word **${gameData.scrambledWord}**!`,
@@ -821,7 +861,7 @@ client.on('messageCreate', async message => {
 				}]
 			});
 			// Set a timer for 30 seconds, if the word isn't guessed by then, delete the wordScrambles object
-			wordScrambles[message.channel.id].timer = setTimeout(() => {
+			return wordScrambles[message.channel.id].timer = setTimeout(() => {
 				message.channel.send({
 					embeds: [{
 						title: "Word Scramble",
@@ -830,7 +870,7 @@ client.on('messageCreate', async message => {
 					}]
 				});
 				delete wordScrambles[message.channel.id];
-			});
+			}, 30 * 1000);
 		}
 	}
 	setCooldown({id: 0}, "wordscramble", 1 * 60 * 1000)
