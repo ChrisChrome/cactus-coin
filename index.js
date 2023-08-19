@@ -1,4 +1,5 @@
 const config = require("./config.json");
+if (!config.debug) config.debug = false;
 const Discord = require("discord.js");
 const rest = new Discord.REST({
 	version: '10'
