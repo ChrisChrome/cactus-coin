@@ -848,7 +848,7 @@ client.on('messageCreate', async message => {
 			return;
 		}
 		// 1 in 50 chance to start a word scramble
-		if (Math.floor(Math.random() * 10) == 0) {
+		if (Math.floor(Math.random() * 25) == 0) {
 			// Start a word scramble
 			setCooldown({id: 0}, "wordscramble", 5 * 60 * 1000)
 			gameData = wordScramble();
