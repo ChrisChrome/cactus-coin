@@ -514,10 +514,10 @@ client.on("interactionCreate", async interaction => {
 			});
 
 			// Get the slot results, yes it's pre-defined, but it's not like it matters
-			slotResults = playSlotMachine();
-			// If there is a slotResults.cooldownOverride use that instead
-			if (slotResults.cooldownOverride) {
-				setCooldown(interaction.user, "slots", slotResults.cooldownOverride * 60 * 1000)
+			slotResults[interaction.user.id] = playSlotMachine();
+			// If there is a slotResults[interaction.user.id].cooldownOverride use that instead
+			if (slotResults[interaction.user.id].cooldownOverride) {
+				setCooldown(interaction.user, "slots", slotResults[interaction.user.id].cooldownOverride * 60 * 1000)
 			} else {
 				setCooldown(interaction.user, "slots", config.games.slots.cooldown * 60 * 1000)
 			}
@@ -530,7 +530,7 @@ client.on("interactionCreate", async interaction => {
 			});
 
 			// Check if they won or lost, if they won, give them the prize
-			difference = await new Number(slotResults.coinDifference);
+			difference = await new Number(slotResults[interaction.user.id].coinDifference);
 			// If they lost subtract 3 coins from the difference
 			if (difference <= 0) difference -= 3;
 			// Wait 4 seconds, then one at a time change the slots, 1 second apart
@@ -538,7 +538,7 @@ client.on("interactionCreate", async interaction => {
 				await interaction.editReply({
 					embeds: [{
 						title: "Slots",
-						description: `[${slotResults.spinResult[0]}][${config.games.slots.spinning}][${config.games.slots.spinning}]`,
+						description: `[${slotResults[interaction.user.id].spinResult[0]}][${config.games.slots.spinning}][${config.games.slots.spinning}]`,
 						color: 0xffff00
 					}]
 				}, 1000);
@@ -546,7 +546,7 @@ client.on("interactionCreate", async interaction => {
 					await interaction.editReply({
 						embeds: [{
 							title: "Slots",
-							description: `[${slotResults.spinResult[0]}][${slotResults.spinResult[1]}][${config.games.slots.spinning}]`,
+							description: `[${slotResults[interaction.user.id].spinResult[0]}][${slotResults[interaction.user.id].spinResult[1]}][${config.games.slots.spinning}]`,
 							color: 0xffff00
 						}]
 					}, 1000);
@@ -554,24 +554,24 @@ client.on("interactionCreate", async interaction => {
 						await interaction.editReply({
 							embeds: [{
 								title: "Slots",
-								description: `[${slotResults.spinResult[0]}][${slotResults.spinResult[1]}][${slotResults.spinResult[2]}]`,
+								description: `[${slotResults[interaction.user.id].spinResult[0]}][${slotResults[interaction.user.id].spinResult[1]}][${slotResults[interaction.user.id].spinResult[2]}]`,
 								color: 0xffff00
 							}]
 						});
 						if (difference > 0) {
-							if (slotResults.jackpot) {
+							if (slotResults[interaction.user.id].jackpot) {
 								return await interaction.editReply({
 									embeds: [{
 										title: "Jackpot!",
-										description: `:rotating_light: [${slotResults.spinResult[0]}][${slotResults.spinResult[1]}][${slotResults.spinResult[2]}] :rotating_light:\nYou won the jackpot! (${difference} coins)`,
+										description: `:rotating_light: [${slotResults[interaction.user.id].spinResult[0]}][${slotResults[interaction.user.id].spinResult[1]}][${slotResults[interaction.user.id].spinResult[2]}] :rotating_light:\nYou won the jackpot! (${difference} coins)`,
 										color: 0xffffff
 									}]
 								});
-							} else if (slotResults.triple) {
+							} else if (slotResults[interaction.user.id].triple) {
 								return await interaction.editReply({
 									embeds: [{
 										title: "Triple!",
-										description: `[${slotResults.spinResult[0]}][${slotResults.spinResult[1]}][${slotResults.spinResult[2]}]\nYou won ${difference} coins!`,
+										description: `[${slotResults[interaction.user.id].spinResult[0]}][${slotResults[interaction.user.id].spinResult[1]}][${slotResults[interaction.user.id].spinResult[2]}]\nYou won ${difference} coins!`,
 										color: 0x00ffff
 									}]
 								});
@@ -579,19 +579,19 @@ client.on("interactionCreate", async interaction => {
 								await interaction.editReply({
 									embeds: [{
 										title: "Slots",
-										description: `[${slotResults.spinResult[0]}][${slotResults.spinResult[1]}][${slotResults.spinResult[2]}]\nYou won ${difference} coins! (You get your play fee back)`,
+										description: `[${slotResults[interaction.user.id].spinResult[0]}][${slotResults[interaction.user.id].spinResult[1]}][${slotResults[interaction.user.id].spinResult[2]}]\nYou won ${difference} coins! (You get your play fee back)`,
 										color: 0x00ff00
 									}]
 								});
 							}
 						} else {
 							// They lost, sad
-							if (slotResults.bombs) {
+							if (slotResults[interaction.user.id].bombs) {
 								// Triple bombs, very sad
 								await interaction.editReply({
 									embeds: [{
 										title: "Bombs!",
-										description: `[${slotResults.spinResult[0]}][${slotResults.spinResult[1]}][${slotResults.spinResult[2]}]\nYou lost ${Math.abs(difference)} coins!`,
+										description: `[${slotResults[interaction.user.id].spinResult[0]}][${slotResults[interaction.user.id].spinResult[1]}][${slotResults[interaction.user.id].spinResult[2]}]\nYou lost ${Math.abs(difference)} coins!`,
 										color: 0xff0000
 									}]
 								});
@@ -599,7 +599,7 @@ client.on("interactionCreate", async interaction => {
 								await interaction.editReply({
 									embeds: [{
 										title: "Slots",
-										description: `[${slotResults.spinResult[0]}][${slotResults.spinResult[1]}][${slotResults.spinResult[2]}]\nYou lost ${Math.abs(difference)} coins!`,
+										description: `[${slotResults[interaction.user.id].spinResult[0]}][${slotResults[interaction.user.id].spinResult[1]}][${slotResults[interaction.user.id].spinResult[2]}]\nYou lost ${Math.abs(difference)} coins!`,
 										color: 0xff0000
 									}]
 								});
