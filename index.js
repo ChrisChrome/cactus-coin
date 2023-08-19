@@ -798,7 +798,7 @@ client.on("interactionCreate", async interaction => {
 			interaction.reply({
 				content: "Word scramble started.",
 				ephemeral: true
-			z})
+			})
 			// Set a timer for 30 seconds, if the word isn't guessed by then, delete the wordScrambles object
 			wordScrambles[interaction.channel.id].timer = setTimeout(() => {
 				interaction.channel.send({
