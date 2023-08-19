@@ -148,6 +148,8 @@ setCooldown = (user, type, cooldown) => {
 	});
 }
 
+var slotResults = {};
+
 client.on("interactionCreate", async interaction => {
 	if (!interaction.isCommand()) return;
 	switch (interaction.commandName) {
