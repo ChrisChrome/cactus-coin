@@ -914,7 +914,7 @@ function playGame(gameName) {
 	switch (gameName) {
 		case 'FISHING':
 			if (randomNumber < 40) {
-				result.string = "You caught water! Congrats?";
+				result.string = "You caught water! Now how did you do that? No wonder your Dad left you.";
 			} else if (randomNumber < 70) {
 				result.string = "You caught a fish! That's pretty cool I guess. (+1 coin)";
 				result.difference = 1;
@@ -932,7 +932,7 @@ function playGame(gameName) {
 
 		case 'DIGGING':
 			if (randomNumber < 40) {
-				result.string = "You dug up dirt! Bleh! That sure is boring.";
+				result.string = "You dug up dirt! Real accomplishment there. Dummy.";
 			} else if (randomNumber < 70) {
 				result.string = "You dug up a shiny pebble! That's pretty rad. (+1 coin)";
 				result.difference = 1;
@@ -943,7 +943,7 @@ function playGame(gameName) {
 				result.string = "You dug up a sick ass earthworm! Cactus likes worms, let me tell you. (+3 coins)";
 				result.difference = 3;
 			} else {
-				result.string = "You hit an electrical wire digging. That was one crazy shock! Melted the coins you had on you! (-3 coins)";
+				result.string = "You dug up a pipe bomb. How could you be so dumb? Nice job idiot. (-3 coins)";
 				result.difference = -3;
 			}
 			break;
@@ -955,7 +955,7 @@ function playGame(gameName) {
 				result.string = "You killed a rabbit. That's pretty cool I guess, you can make a jump boost from it. (+1 coin)";
 				result.difference = 1;
 			} else if (randomNumber < 90) {
-				result.string = "You killed a deer! Nice shooting! (+2 coins)";
+				result.string = "You killed a deer! Nice shooting! Maybe you aren't a failure like your father said! (+2 coins)";
 				result.difference = 2;
 			} else if (randomNumber < 95) {
 				result.string = "You killed a Bigfoot. Wait.... What? You killed a bigfo- The government pays to keep you quiet. (+3 coins.)";
