@@ -410,14 +410,14 @@ client.on("interactionCreate", async interaction => {
 						ephemeral: true
 					});
 					// Now check if they have enough for the tax
-					if (balance < amount) return interaction.reply({
+					if (balance < amount * 1.25) return interaction.reply({
 						content: `You do not have enough coins to pay the tax of ${config.discord.coin}${amount * 0.25}. You only have ${config.discord.coin}${balance}.`,
 						ephemeral: true
 					});
 					// At this point we know they have enough coins, so we can take them away, make sure to take the tax away too
-					checkAndModifyPoints(interaction.user, -amount);
+					checkAndModifyPoints(interaction.user, -amount * 1.25);
 					// Now we can give the other user the coins
-					checkAndModifyPoints(interaction.options.getMember("user").user, amount * 0.75);
+					checkAndModifyPoints(interaction.options.getMember("user").user, amount);
 					// Now we can tell the user that it worked
 					// get the amount sent with 2 decimal places if it has a decimal
 					if (amount % 1 != 0) {
@@ -442,7 +442,7 @@ client.on("interactionCreate", async interaction => {
 						embeds: [{
 							title: "Transfer Receipt",
 							color: 0xffff00,
-							description: `You sent ${config.discord.coin}${amount} to ${interaction.options.getMember("user").user}.\nYou paid a tax of ${config.discord.coin}${amount}.`
+							description: `You sent ${config.discord.coin}${amount} to ${interaction.options.getMember("user").user}.\nYou paid a tax of ${config.discord.coin}${amount * 0.25}.`
 						}]
 					}).catch(err => { });
 
