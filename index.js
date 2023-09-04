@@ -790,7 +790,7 @@ client.on("interactionCreate", async interaction => {
 			}
 			else {
 				override = false;
-			]
+			}
 			gameData = wordScramble(override);
 			wordScrambles[interaction.channel.id] = {
 				word: gameData.word,
