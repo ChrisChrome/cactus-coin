@@ -843,7 +843,7 @@ client.on('messageCreate', async message => {
 		// Check if the message is the correct answer
 		if (message.content.toLowerCase() == wordScrambles[message.channel.id].word.toLowerCase()) {
 			// Give the user a point
-			await checkAndModifyPoints(message.author, ${wordScrambles[message.channel.id].amount});
+			await checkAndModifyPoints(message.author, wordScrambles[message.channel.id].amount);
 			// Send the message
 			message.channel.send({
 				embeds: [{
