@@ -867,10 +867,12 @@ client.on('messageCreate', async message => {
 		if (Math.floor(Math.random() * 25) == 0) {
 			// Start a word scramble
 			setCooldown({id: 0}, "wordscramble", 5 * 60 * 1000)
-			gameData = wordScramble();
+			override = false
+			gameData = wordScramble(override);
 			wordScrambles[message.channel.id] = {
 				word: gameData.word,
 				scrambledWord: gameData.scrambledWord,
+				amount: 2,
 				badGuesses: []
 			}
 			message.channel.send({
