@@ -85,7 +85,7 @@
 	},
 	{
 		"name": "transfer",
-		"description": "Transfer coins to another user (4:3 ratio)",
+		"description": "Transfer coins to another user with a 25% tax",
 		"type": 1,
 		"options": [
 			{
