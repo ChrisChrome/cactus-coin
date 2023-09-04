@@ -891,7 +891,7 @@ function wordScramble() {
 	}
 	else {
 		word = override;
-	]
+	}
 	scrambledWord = word.split('').sort(function () {
 		// Fully scramble the word 3 times to be safe
 		return 0.5 - Math.random();
