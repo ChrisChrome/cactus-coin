@@ -885,7 +885,13 @@ client.on('messageCreate', async message => {
 
 function wordScramble() {
 	// Get a random word from config.games.wordscramble.words then scramble it
-	word = config.games.wordscramble.words[Math.floor(Math.random() * config.games.wordscramble.words.length)];
+	override = interaction.options.get("override").value;
+	if (!override) {
+		word = config.games.wordscramble.words[Math.floor(Math.random() * config.games.wordscramble.words.length)];
+	}
+	else {
+		word = override;
+	]
 	scrambledWord = word.split('').sort(function () {
 		// Fully scramble the word 3 times to be safe
 		return 0.5 - Math.random();
