@@ -785,7 +785,12 @@ client.on("interactionCreate", async interaction => {
 			}
 
 			// Start a word scramble
-			override = interaction.options.get("override").value;
+			if (interaction.options.get("override")) {
+				override = interaction.options.get("override").value;
+			}
+			else {
+				override = false;
+			]
 			gameData = wordScramble(override);
 			wordScrambles[interaction.channel.id] = {
 				word: gameData.word,
