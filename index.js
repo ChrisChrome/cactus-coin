@@ -784,16 +784,23 @@ client.on("interactionCreate", async interaction => {
 				});
 			}
 
-			// Start a word scramble
+			// Start a word scramble and check if we specified a word
 			if (interaction.options.get("override")) {
 				override = interaction.options.get("override").value;
 			}
 			else {
 				override = false;
+			} ${wordScrambles.amount}
+			if (interaction.options.get("amount")) {
+				amount = interaction.options.getNumber("amount");
+			}
+			else {
+				amount = 2;
 			}
 			gameData = wordScramble(override);
 			wordScrambles[interaction.channel.id] = {
 				word: gameData.word,
+				amount: amount,
 				scrambledWord: gameData.scrambledWord,
 				badGuesses: []
 			}
@@ -836,12 +843,12 @@ client.on('messageCreate', async message => {
 		// Check if the message is the correct answer
 		if (message.content.toLowerCase() == wordScrambles[message.channel.id].word.toLowerCase()) {
 			// Give the user a point
-			await checkAndModifyPoints(message.author, 2);
+			await checkAndModifyPoints(message.author, ${wordScrambles[message.channel.id].amount});
 			// Send the message
 			message.channel.send({
 				embeds: [{
 					title: "Word Scramble",
-					description: `**${message.author}** got the word **${wordScrambles[message.channel.id].word}**!\nYou got 2 coins!`,
+					description: `**${message.author}** got the word **${wordScrambles[message.channel.id].word}**!\nYou got ${wordScrambles[message.channel.id].amount} coins!`,
 					color: 0x00ff00
 				}]
 			});

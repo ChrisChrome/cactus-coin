@@ -127,9 +127,9 @@
 		"options":[
 			{
 				"name": "rig",
-				"description": "DEBUG: Rig the slots to specific values",
+				"description": "Willing to put some lucky number/word? This option is for you!",
 				"type": 3,
-				"required": true
+				"required": false
 			}
 		]
 	},
@@ -232,6 +232,12 @@
 				"name": "override",
 				"description": "Force the specified string/word instead of the random option",
 				"type": 3,
+				"required": false
+			},
+			{
+				"name": "amount",
+				"description": "The amount to pay for this forced scramble",
+				"type": 10,
 				"required": false
 			}
 		]
