@@ -790,7 +790,7 @@ client.on("interactionCreate", async interaction => {
 			}
 			else {
 				override = false;
-			} ${wordScrambles.amount}
+			}
 			if (interaction.options.get("amount")) {
 				amount = interaction.options.getNumber("amount");
 			}
