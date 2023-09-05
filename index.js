@@ -792,15 +792,15 @@ client.on("interactionCreate", async interaction => {
 				override = false;
 			}
 			if (interaction.options.get("amount")) {
-				amount = interaction.options.getNumber("amount");
+				coinamount = interaction.options.getNumber("amount");
 			}
 			else {
-				amount = 2;
+				coinamount = 2;
 			}
 			gameData = wordScramble(override);
 			wordScrambles[interaction.channel.id] = {
 				word: gameData.word,
-				amount: amount,
+				amount: coinamount,
 				scrambledWord: gameData.scrambledWord,
 				badGuesses: []
 			}
@@ -868,6 +868,7 @@ client.on('messageCreate', async message => {
 			// Start a word scramble
 			setCooldown({id: 0}, "wordscramble", 5 * 60 * 1000)
 			override = false
+			coinamount = 2
 			gameData = wordScramble(override);
 			wordScrambles[message.channel.id] = {
 				word: gameData.word,
