@@ -643,7 +643,7 @@ client.on("interactionCreate", async interaction => {
 			});
 
 			// Flip the coin
-			coin = Math.random() < 0.5 ? "heads" : "tails";
+			coin = Math.random() < 0.6 ? "heads" : "tails";
 			before = await checkPoints(interaction.user);
 			side = interaction.options.getString("side");
 			outcome = coin == side ? true : false;
@@ -836,7 +836,7 @@ client.on('messageCreate', async message => {
 	if (message.author.bot) return;
 	if (!message.guild) return;
 	if (message.channel.type == "dm") return;
-	if (config.games.wordscramble.blacklist.includes(message.channel.id)) return;
+	if (!config.games.wordscramble.whitelist.includes(message.channel.id)) return;
 	// Check if the channel already has a word scramble going
 	if (wordScrambles[message.channel.id]) {
 		if (wordScrambles[message.channel.id].badGuesses.includes(message.author.id)) return;
