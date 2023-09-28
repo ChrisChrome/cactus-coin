@@ -836,7 +836,7 @@ client.on('messageCreate', async message => {
 	if (message.author.bot) return;
 	if (!message.guild) return;
 	if (message.channel.type == "dm") return;
-	if (!config.games.wordscramble.whitelist.includes(message.channel.id)) return;
+	if (!config.games.wordscramble.whitelist.includes(message.channel.id) && !config.games.wordscramble.whitelist.includes(message.channel.parentId)) return;
 	// Check if the channel already has a word scramble going
 	if (wordScrambles[message.channel.id]) {
 		if (wordScrambles[message.channel.id].badGuesses.includes(message.author.id)) return;
