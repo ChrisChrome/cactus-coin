@@ -123,15 +123,7 @@
 	{
 		"name": "slots",
 		"description": "Play the slots (Costs 3 coins)",
-		"type": 1,
-		"options":[
-			{
-				"name": "rig",
-				"description": "Willing to put some lucky number/word? This option is for you!",
-				"type": 3,
-				"required": false
-			}
-		]
+		"type": 1
 	},
 	{
 		"name": "coinflip",
