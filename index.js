@@ -836,7 +836,6 @@ client.on('messageCreate', async message => {
 	if (message.author.bot) return;
 	if (!message.guild) return;
 	if (message.channel.type == "dm") return;
-	if (!config.games.wordscramble.whitelist.includes(message.channel.id) && !config.games.wordscramble.whitelist.includes(message.channel.parentId)) return;
 	// Check if the channel already has a word scramble going
 	if (wordScrambles[message.channel.id]) {
 		if (wordScrambles[message.channel.id].badGuesses.includes(message.author.id)) return;
@@ -859,14 +858,15 @@ client.on('messageCreate', async message => {
 			wordScrambles[message.channel.id].badGuesses.push(message.author.id);
 		}
 	} else {
-		curCooldown = await checkCooldown({id: 0}, "wordscramble")
+		if (!config.games.wordscramble.whitelist.includes(message.channel.id) && !config.games.wordscramble.whitelist.includes(message.channel.parentId)) return;
+		curCooldown = await checkCooldown({ id: 0 }, "wordscramble")
 		if (curCooldown) {
 			return;
 		}
 		// 1 in 50 chance to start a word scramble
 		if (Math.floor(Math.random() * 25) == 0) {
 			// Start a word scramble
-			setCooldown({id: 0}, "wordscramble", 5 * 60 * 1000)
+			setCooldown({ id: 0 }, "wordscramble", 5 * 60 * 1000)
 			override = false
 			coinamount = 2
 			gameData = wordScramble(override);
@@ -896,7 +896,7 @@ client.on('messageCreate', async message => {
 			}, 30 * 1000);
 		}
 	}
-	setCooldown({id: 0}, "wordscramble", 1 * 60 * 1000)
+	setCooldown({ id: 0 }, "wordscramble", 1 * 60 * 1000)
 });
 
 function wordScramble() {
