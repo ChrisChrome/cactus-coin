@@ -627,8 +627,7 @@ client.on("interactionCreate", async interaction => {
 					ephemeral: true
 				});
 			}
-			setCooldown(interaction.user, "coinflip", config.games.coinflip.cooldown * 60 * 1000)
-
+			
 			bet = parseInt(interaction.options.get("amount").value);
 			if (bet < 1 || bet > 10) return interaction.reply({
 				content: "You can only bet between 1 and 10 coins.",
@@ -651,6 +650,7 @@ client.on("interactionCreate", async interaction => {
 			// if they lose inverse the bet
 			if (!outcome) bet = -bet;
 			await checkAndModifyPoints(interaction.user, bet);
+			setCooldown(interaction.user, "coinflip", config.games.coinflip.cooldown * 60 * 1000)
 			if (coin == "heads") return interaction.reply({
 				embeds: [{
 					title: "Coinflip",
@@ -689,7 +689,7 @@ client.on("interactionCreate", async interaction => {
 					ephemeral: true
 				});
 			}
-			setCooldown(interaction.user, "snakeeyes", config.games.snakeeyes.cooldown * 60 * 1000)
+			
 
 			bet = parseInt(interaction.options.get("amount").value);
 			if (bet < 1 || bet > 10) return interaction.reply({
@@ -703,7 +703,7 @@ client.on("interactionCreate", async interaction => {
 				content: "You do not have enough coins to play snakeeyes.",
 				ephemeral: true
 			});
-
+			setCooldown(interaction.user, "snakeeyes", config.games.snakeeyes.cooldown * 60 * 1000)
 			// Roll the dice
 			dice = Math.floor(Math.random() * 6) + 1;
 			before = points;
