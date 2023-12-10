@@ -738,11 +738,11 @@ client.on("interactionCreate", async interaction => {
 			}
 			// 24 hours
 			setCooldown(interaction.user, "daily", 24 * 60 * 60 * 1000)
-			await checkAndModifyPoints(interaction.user, 2);
+			await checkAndModifyPoints(interaction.user, 1);
 			interaction.reply({
 				embeds: [{
 					title: "Daily",
-					description: `You got 2 coins!`,
+					description: `You got 1 coin!`,
 					color: 0x00ff00
 				}]
 			});
@@ -757,11 +757,11 @@ client.on("interactionCreate", async interaction => {
 			}
 			// 7 days
 			setCooldown(interaction.user, "weekly", 7 * 24 * 60 * 60 * 1000)
-			await checkAndModifyPoints(interaction.user, 14);
+			await checkAndModifyPoints(interaction.user, 4);
 			interaction.reply({
 				embeds: [{
 					title: "Weekly",
-					description: `You got 14 coins!`,
+					description: `You got 4 coins!`,
 					color: 0x00ff00
 				}]
 			});
