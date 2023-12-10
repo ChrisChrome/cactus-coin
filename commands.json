@@ -85,7 +85,7 @@
 	},
 	{
 		"name": "transfer",
-		"description": "Transfer coins to another user (2:1 ratio)",
+		"description": "Transfer coins to another user with a 25% tax",
 		"type": 1,
 		"options": [
 			{
@@ -218,6 +218,20 @@
 	{
 		"name": "wordscramble",
 		"description": "Trigger a word scramble (admin only)",
-		"type": 1
+		"type": 1,
+		"options":[
+			{
+				"name": "override",
+				"description": "Force the specified string/word instead of the random option",
+				"type": 3,
+				"required": false
+			},
+			{
+				"name": "amount",
+				"description": "The amount to pay for this forced scramble",
+				"type": 10,
+				"required": false
+			}
+		]
 	}
 ]

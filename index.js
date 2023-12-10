@@ -1,4 +1,5 @@
 const config = require("./config.json");
+if (!config.debug) config.debug = false;
 const Discord = require("discord.js");
 const rest = new Discord.REST({
 	version: '10'
@@ -147,6 +148,8 @@ setCooldown = (user, type, cooldown) => {
 		});
 	});
 }
+
+var slotResults = {};
 
 client.on("interactionCreate", async interaction => {
 	if (!interaction.isCommand()) return;
@@ -407,14 +410,14 @@ client.on("interactionCreate", async interaction => {
 						ephemeral: true
 					});
 					// Now check if they have enough for the tax
-					if (balance < amount) return interaction.reply({
+					if (balance < amount * 1.25) return interaction.reply({
 						content: `You do not have enough coins to pay the tax of ${config.discord.coin}${amount * 0.25}. You only have ${config.discord.coin}${balance}.`,
 						ephemeral: true
 					});
 					// At this point we know they have enough coins, so we can take them away, make sure to take the tax away too
-					checkAndModifyPoints(interaction.user, -amount);
+					checkAndModifyPoints(interaction.user, -amount * 1.25);
 					// Now we can give the other user the coins
-					checkAndModifyPoints(interaction.options.getMember("user").user, amount * 0.75);
+					checkAndModifyPoints(interaction.options.getMember("user").user, amount);
 					// Now we can tell the user that it worked
 					// get the amount sent with 2 decimal places if it has a decimal
 					if (amount % 1 != 0) {
@@ -439,7 +442,7 @@ client.on("interactionCreate", async interaction => {
 						embeds: [{
 							title: "Transfer Receipt",
 							color: 0xffff00,
-							description: `You sent ${config.discord.coin}${amount} to ${interaction.options.getMember("user").user}.\nYou paid a tax of ${config.discord.coin}${amount}.`
+							description: `You sent ${config.discord.coin}${amount} to ${interaction.options.getMember("user").user}.\nYou paid a tax of ${config.discord.coin}${amount * 0.25}.`
 						}]
 					}).catch(err => { });
 
@@ -514,10 +517,10 @@ client.on("interactionCreate", async interaction => {
 			});
 
 			// Get the slot results, yes it's pre-defined, but it's not like it matters
-			slotResults = playSlotMachine();
-			// If there is a slotResults.cooldownOverride use that instead
-			if (slotResults.cooldownOverride) {
-				setCooldown(interaction.user, "slots", slotResults.cooldownOverride * 60 * 1000)
+			slotResults[interaction.user.id] = playSlotMachine();
+			// If there is a slotResults[interaction.user.id].cooldownOverride use that instead
+			if (slotResults[interaction.user.id].cooldownOverride) {
+				setCooldown(interaction.user, "slots", slotResults[interaction.user.id].cooldownOverride * 60 * 1000)
 			} else {
 				setCooldown(interaction.user, "slots", config.games.slots.cooldown * 60 * 1000)
 			}
@@ -530,7 +533,7 @@ client.on("interactionCreate", async interaction => {
 			});
 
 			// Check if they won or lost, if they won, give them the prize
-			difference = await new Number(slotResults.coinDifference);
+			difference = await new Number(slotResults[interaction.user.id].coinDifference);
 			// If they lost subtract 3 coins from the difference
 			if (difference <= 0) difference -= 3;
 			// Wait 4 seconds, then one at a time change the slots, 1 second apart
@@ -538,7 +541,7 @@ client.on("interactionCreate", async interaction => {
 				await interaction.editReply({
 					embeds: [{
 						title: "Slots",
-						description: `[${slotResults.spinResult[0]}][${config.games.slots.spinning}][${config.games.slots.spinning}]`,
+						description: `[${slotResults[interaction.user.id].spinResult[0]}][${config.games.slots.spinning}][${config.games.slots.spinning}]`,
 						color: 0xffff00
 					}]
 				}, 1000);
@@ -546,7 +549,7 @@ client.on("interactionCreate", async interaction => {
 					await interaction.editReply({
 						embeds: [{
 							title: "Slots",
-							description: `[${slotResults.spinResult[0]}][${slotResults.spinResult[1]}][${config.games.slots.spinning}]`,
+							description: `[${slotResults[interaction.user.id].spinResult[0]}][${slotResults[interaction.user.id].spinResult[1]}][${config.games.slots.spinning}]`,
 							color: 0xffff00
 						}]
 					}, 1000);
@@ -554,24 +557,24 @@ client.on("interactionCreate", async interaction => {
 						await interaction.editReply({
 							embeds: [{
 								title: "Slots",
-								description: `[${slotResults.spinResult[0]}][${slotResults.spinResult[1]}][${slotResults.spinResult[2]}]`,
+								description: `[${slotResults[interaction.user.id].spinResult[0]}][${slotResults[interaction.user.id].spinResult[1]}][${slotResults[interaction.user.id].spinResult[2]}]`,
 								color: 0xffff00
 							}]
 						});
 						if (difference > 0) {
-							if (slotResults.jackpot) {
+							if (slotResults[interaction.user.id].jackpot) {
 								return await interaction.editReply({
 									embeds: [{
 										title: "Jackpot!",
-										description: `:rotating_light: [${slotResults.spinResult[0]}][${slotResults.spinResult[1]}][${slotResults.spinResult[2]}] :rotating_light:\nYou won the jackpot! (${difference} coins)`,
+										description: `:rotating_light: [${slotResults[interaction.user.id].spinResult[0]}][${slotResults[interaction.user.id].spinResult[1]}][${slotResults[interaction.user.id].spinResult[2]}] :rotating_light:\nYou won the jackpot! (${difference} coins)`,
 										color: 0xffffff
 									}]
 								});
-							} else if (slotResults.triple) {
+							} else if (slotResults[interaction.user.id].triple) {
 								return await interaction.editReply({
 									embeds: [{
 										title: "Triple!",
-										description: `[${slotResults.spinResult[0]}][${slotResults.spinResult[1]}][${slotResults.spinResult[2]}]\nYou won ${difference} coins!`,
+										description: `[${slotResults[interaction.user.id].spinResult[0]}][${slotResults[interaction.user.id].spinResult[1]}][${slotResults[interaction.user.id].spinResult[2]}]\nYou won ${difference} coins!`,
 										color: 0x00ffff
 									}]
 								});
@@ -579,19 +582,19 @@ client.on("interactionCreate", async interaction => {
 								await interaction.editReply({
 									embeds: [{
 										title: "Slots",
-										description: `[${slotResults.spinResult[0]}][${slotResults.spinResult[1]}][${slotResults.spinResult[2]}]\nYou won ${difference} coins! (You get your play fee back)`,
+										description: `[${slotResults[interaction.user.id].spinResult[0]}][${slotResults[interaction.user.id].spinResult[1]}][${slotResults[interaction.user.id].spinResult[2]}]\nYou won ${difference} coins! (You get your play fee back)`,
 										color: 0x00ff00
 									}]
 								});
 							}
 						} else {
 							// They lost, sad
-							if (slotResults.bombs) {
+							if (slotResults[interaction.user.id].bombs) {
 								// Triple bombs, very sad
 								await interaction.editReply({
 									embeds: [{
 										title: "Bombs!",
-										description: `[${slotResults.spinResult[0]}][${slotResults.spinResult[1]}][${slotResults.spinResult[2]}]\nYou lost ${Math.abs(difference)} coins!`,
+										description: `[${slotResults[interaction.user.id].spinResult[0]}][${slotResults[interaction.user.id].spinResult[1]}][${slotResults[interaction.user.id].spinResult[2]}]\nYou lost ${Math.abs(difference)} coins!`,
 										color: 0xff0000
 									}]
 								});
@@ -599,7 +602,7 @@ client.on("interactionCreate", async interaction => {
 								await interaction.editReply({
 									embeds: [{
 										title: "Slots",
-										description: `[${slotResults.spinResult[0]}][${slotResults.spinResult[1]}][${slotResults.spinResult[2]}]\nYou lost ${Math.abs(difference)} coins!`,
+										description: `[${slotResults[interaction.user.id].spinResult[0]}][${slotResults[interaction.user.id].spinResult[1]}][${slotResults[interaction.user.id].spinResult[2]}]\nYou lost ${Math.abs(difference)} coins!`,
 										color: 0xff0000
 									}]
 								});
@@ -624,8 +627,7 @@ client.on("interactionCreate", async interaction => {
 					ephemeral: true
 				});
 			}
-			setCooldown(interaction.user, "coinflip", config.games.coinflip.cooldown * 60 * 1000)
-
+			
 			bet = parseInt(interaction.options.get("amount").value);
 			if (bet < 1 || bet > 10) return interaction.reply({
 				content: "You can only bet between 1 and 10 coins.",
@@ -640,7 +642,7 @@ client.on("interactionCreate", async interaction => {
 			});
 
 			// Flip the coin
-			coin = Math.random() < 0.5 ? "heads" : "tails";
+			coin = Math.random() < 0.6 ? "heads" : "tails";
 			before = await checkPoints(interaction.user);
 			side = interaction.options.getString("side");
 			outcome = coin == side ? true : false;
@@ -648,6 +650,7 @@ client.on("interactionCreate", async interaction => {
 			// if they lose inverse the bet
 			if (!outcome) bet = -bet;
 			await checkAndModifyPoints(interaction.user, bet);
+			setCooldown(interaction.user, "coinflip", config.games.coinflip.cooldown * 60 * 1000)
 			if (coin == "heads") return interaction.reply({
 				embeds: [{
 					title: "Coinflip",
@@ -686,7 +689,7 @@ client.on("interactionCreate", async interaction => {
 					ephemeral: true
 				});
 			}
-			setCooldown(interaction.user, "snakeeyes", config.games.snakeeyes.cooldown * 60 * 1000)
+			
 
 			bet = parseInt(interaction.options.get("amount").value);
 			if (bet < 1 || bet > 10) return interaction.reply({
@@ -700,7 +703,7 @@ client.on("interactionCreate", async interaction => {
 				content: "You do not have enough coins to play snakeeyes.",
 				ephemeral: true
 			});
-
+			setCooldown(interaction.user, "snakeeyes", config.games.snakeeyes.cooldown * 60 * 1000)
 			// Roll the dice
 			dice = Math.floor(Math.random() * 6) + 1;
 			before = points;
@@ -781,10 +784,23 @@ client.on("interactionCreate", async interaction => {
 				});
 			}
 
-			// Start a word scramble
-			gameData = wordScramble();
+			// Start a word scramble and check if we specified a word
+			if (interaction.options.get("override")) {
+				override = interaction.options.get("override").value;
+			}
+			else {
+				override = false;
+			}
+			if (interaction.options.get("amount")) {
+				coinamount = interaction.options.getNumber("amount");
+			}
+			else {
+				coinamount = 2;
+			}
+			gameData = wordScramble(override);
 			wordScrambles[interaction.channel.id] = {
 				word: gameData.word,
+				amount: coinamount,
 				scrambledWord: gameData.scrambledWord,
 				badGuesses: []
 			}
@@ -820,19 +836,18 @@ client.on('messageCreate', async message => {
 	if (message.author.bot) return;
 	if (!message.guild) return;
 	if (message.channel.type == "dm") return;
-	if (config.games.wordscramble.blacklist.includes(message.channel.id)) return;
 	// Check if the channel already has a word scramble going
 	if (wordScrambles[message.channel.id]) {
 		if (wordScrambles[message.channel.id].badGuesses.includes(message.author.id)) return;
 		// Check if the message is the correct answer
 		if (message.content.toLowerCase() == wordScrambles[message.channel.id].word.toLowerCase()) {
 			// Give the user a point
-			await checkAndModifyPoints(message.author, 2);
+			await checkAndModifyPoints(message.author, wordScrambles[message.channel.id].amount);
 			// Send the message
 			message.channel.send({
 				embeds: [{
 					title: "Word Scramble",
-					description: `**${message.author}** got the word **${wordScrambles[message.channel.id].word}**!\nYou got 2 coins!`,
+					description: `**${message.author}** got the word **${wordScrambles[message.channel.id].word}**!\nYou got ${wordScrambles[message.channel.id].amount} coins!`,
 					color: 0x00ff00
 				}]
 			});
@@ -843,18 +858,22 @@ client.on('messageCreate', async message => {
 			wordScrambles[message.channel.id].badGuesses.push(message.author.id);
 		}
 	} else {
-		curCooldown = await checkCooldown({id: 0}, "wordscramble")
+		if (!config.games.wordscramble.whitelist.includes(message.channel.id) && !config.games.wordscramble.whitelist.includes(message.channel.parentId)) return;
+		curCooldown = await checkCooldown({ id: 0 }, "wordscramble")
 		if (curCooldown) {
 			return;
 		}
 		// 1 in 50 chance to start a word scramble
-		if (Math.floor(Math.random() * 10) == 0) {
+		if (Math.floor(Math.random() * 25) == 0) {
 			// Start a word scramble
-			setCooldown({id: 0}, "wordscramble", 5 * 60 * 1000)
-			gameData = wordScramble();
+			setCooldown({ id: 0 }, "wordscramble", 5 * 60 * 1000)
+			override = false
+			coinamount = 2
+			gameData = wordScramble(override);
 			wordScrambles[message.channel.id] = {
 				word: gameData.word,
 				scrambledWord: gameData.scrambledWord,
+				amount: 2,
 				badGuesses: []
 			}
 			message.channel.send({
@@ -877,12 +896,17 @@ client.on('messageCreate', async message => {
 			}, 30 * 1000);
 		}
 	}
-	setCooldown({id: 0}, "wordscramble", 1 * 60 * 1000)
+	setCooldown({ id: 0 }, "wordscramble", 1 * 60 * 1000)
 });
 
 function wordScramble() {
 	// Get a random word from config.games.wordscramble.words then scramble it
-	word = config.games.wordscramble.words[Math.floor(Math.random() * config.games.wordscramble.words.length)];
+	if (!override) {
+		word = config.games.wordscramble.words[Math.floor(Math.random() * config.games.wordscramble.words.length)];
+	}
+	else {
+		word = override;
+	}
 	scrambledWord = word.split('').sort(function () {
 		// Fully scramble the word 3 times to be safe
 		return 0.5 - Math.random();
