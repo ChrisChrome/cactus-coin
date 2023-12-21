@@ -72,7 +72,7 @@ checkAndModifyPoints = async (user, amount, override) => {
 			return row.points + amount;
 		}
 		return false;
-	});`
+	});
 }
 
 checkPoints = (user) => {
