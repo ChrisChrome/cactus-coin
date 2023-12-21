@@ -72,7 +72,7 @@ checkAndModifyPoints = async (user, amount, override) => {
 			return row.points + amount;
 		}
 		return false;
-	});
+	});`
 }
 
 checkPoints = (user) => {
@@ -642,26 +642,27 @@ client.on("interactionCreate", async interaction => {
 			});
 
 			// Flip the coin
-			coin = Math.random() < 0.6 ? "heads" : "tails";
-			before = await checkPoints(interaction.user);
+			coin = Math.random() <= 0.5 ? "heads" : "tails";
 			side = interaction.options.getString("side");
 			outcome = coin == side ? true : false;
-			// If they win, give them the prize, if they lose, take the prize
-			// if they lose inverse the bet
-			if (!outcome) bet = -bet;
-			await checkAndModifyPoints(interaction.user, bet);
-			setCooldown(interaction.user, "coinflip", config.games.coinflip.cooldown * 60 * 1000)
+			// If they win, give them the prize, if they lose take up to double the prize away
+			// if they lose inverse the bet and double it
+			if (!outcome) bet = -bet * 2;
+			bet  = Math.max( 0, points + bet);
+			poor = bet <= 0 ? true : false;
+			await checkAndModifyPoints(interaction.user, bet, poor);
+			setCooldown(interaction.user, "coinflip", config.games.coinflip.cooldown * 60 * 1000) //sanity checks in case they somehow started a coinflip despite having a negative balance
 			if (coin == "heads") return interaction.reply({
 				embeds: [{
 					title: "Coinflip",
-					description: `You flipped ${config.games.coinflip.heads} and **${outcome ? "won" : "lost"}** ${Math.abs(bet)} coins!`,
+					description: `You flipped ${config.games.coinflip.heads} and **${outcome ? "won" : "lost"}** ${poor ? Math.abs(points) : Math.abs(bet)} coins!`, // sanity check
 					color: outcome ? 0x00ff00 : 0xff0000
 				}]
 			});
 			else if (coin == "tails") return interaction.reply({
 				embeds: [{
 					title: "Coinflip",
-					description: `You flipped ${config.games.coinflip.tails} and **${outcome ? "won" : "lost"}** ${Math.abs(bet)} coins!`,
+					description: `You flipped ${config.games.coinflip.tails} and **${outcome ? "won" : "lost"}** ${poor ? Math.abs(points) : Math.abs(bet)} coins!`,
 					color: outcome ? 0x00ff00 : 0xff0000
 				}]
 			});
@@ -913,13 +914,15 @@ function wordScramble() {
 	}).sort(function () {
 		return 0.5 - Math.random();
 	}).join('');
-	// if the scrambled word is the same as the word, scramble it again
+	// if the scrambled word is the same as the word, keep scrambling it until they are different
 	if (scrambledWord == word) {
-		scrambledWord = word.split('').sort(function () {
-			return 0.5 - Math.random();
-		}).sort(function () {
-			return 0.5 - Math.random();
-		}).join('');
+		while (scrambledWord == word) {
+			scrambledWord = word.split('').sort(function () {
+				return 0.5 - Math.random();
+			}).sort(function () {
+				return 0.5 - Math.random();
+			}).join('');
+		}
 	}
 	return {
 		word: word,
@@ -1074,10 +1077,11 @@ function playSlotMachine() {
 	return result;
 }
 
-const rockPaperScissors = (userChoice) => {
+const roshambo = (userChoice) => { 
 	const choices = ['🪨', '📄', '✂️'];
-	const botChoice = choices[Math.floor(Math.random() * choices.length)];
-
+	//Changed it to be hardcoded because RPS only ever has 3 choices.
+	const botChoice = choices[Math.floor(Math.random() * 3)]; 
+	
 	if (userChoice === botChoice) return 'It\'s a tie!';
 	else if (
 		(userChoice === '🪨' && botChoice === '✂️') ||
