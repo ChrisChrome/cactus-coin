@@ -795,7 +795,7 @@ client.on("interactionCreate", async interaction => {
 				coinamount = interaction.options.getNumber("amount");
 			}
 			else {
-				coinamount = 2;
+				coinamount = 1;
 			}
 			gameData = wordScramble(override);
 			wordScrambles[interaction.channel.id] = {
