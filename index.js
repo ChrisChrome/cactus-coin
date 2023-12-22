@@ -642,15 +642,13 @@ client.on("interactionCreate", async interaction => {
 			});
 
 			// Flip the coin
-			coin = Math.random() <= 0.5 ? "heads" : "tails";
+			Math.random() <= 0.5 ? "heads" : "tails";
 			side = interaction.options.getString("side");
 			outcome = coin == side ? true : false;
 			// If they win, give them the prize, if they lose take up to double the prize away
 			// if they lose inverse the bet and double it
 			if (!outcome) bet = -bet * 2;
-			bet  = Math.max( 0, points + bet);
-			poor = bet <= 0 ? true : false;
-			await checkAndModifyPoints(interaction.user, bet, poor);
+			await checkAndModifyPoints(interaction.user, bet);
 			setCooldown(interaction.user, "coinflip", config.games.coinflip.cooldown * 60 * 1000) //sanity checks in case they somehow started a coinflip despite having a negative balance
 			if (coin == "heads") return interaction.reply({
 				embeds: [{
