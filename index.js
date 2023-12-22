@@ -1,4 +1,4 @@
-const config = require("./config.json");
+Rconst config = require("./config.json");
 if (!config.debug) config.debug = false;
 const Discord = require("discord.js");
 const rest = new Discord.REST({
@@ -642,7 +642,7 @@ client.on("interactionCreate", async interaction => {
 			});
 
 			// Flip the coin
-			Math.random() <= 0.5 ? "heads" : "tails";
+			Math.random() coin <= 0.5 ? "heads" : "tails";
 			side = interaction.options.getString("side");
 			outcome = coin == side ? true : false;
 			// If they win, give them the prize, if they lose take up to double the prize away
