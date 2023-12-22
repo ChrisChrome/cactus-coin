@@ -642,7 +642,7 @@ client.on("interactionCreate", async interaction => {
 			});
 
 			// Flip the coin
-			Math.random() coin <= 0.5 ? "heads" : "tails";
+			coin = Math.random() <= 0.5 ? "heads" : "tails";
 			side = interaction.options.getString("side");
 			outcome = coin == side ? true : false;
 			// If they win, give them the prize, if they lose take up to double the prize away
