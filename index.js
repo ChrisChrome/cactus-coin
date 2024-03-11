@@ -24,6 +24,23 @@ const db = new sqlite3.Database("./database.db");
 // Create table if it doesn't exist
 db.run("CREATE TABLE IF NOT EXISTS points (id TEXT, points INTEGER)");
 db.run("CREATE TABLE IF NOT EXISTS cooldowns (id TEXT, type TEXT, cooldown TEXT)");
+db.run("CREATE TABLE IF NOT EXISTS fpole (id TEXT, fpole INTEGER)");
+db.run("CREATE TABLE IF NOT EXISTS rifle (id TEXT, rifle INTEGER)");
+db.run("CREATE TABLE IF NOT EXISTS shovel (id TEXT, shovel INTEGER)");
+db.run("CREATE TABLE IF NOT EXISTS mine (id TEXT, mine INTEGER)");
+db.run("CREATE TABLE IF NOT EXISTS guard (id TEXT, guard INTEGER)");
+db.run("CREATE TABLE IF NOT EXISTS debit (id TEXT, debit INTEGER)");
+db.run("CREATE TABLE IF NOT EXISTS bait (id TEXT, bait INTEGER)");
+db.run("CREATE TABLE IF NOT EXISTS cuffs (id TEXT, cuffs INTEGER)");
+db.run("CREATE TABLE IF NOT EXISTS minnow (id TEXT, minnow INTEGER)");
+db.run("CREATE TABLE IF NOT EXISTS guppy (id TEXT, guppy INTEGER)");
+db.run("CREATE TABLE IF NOT EXISTS carp (id TEXT, carp INTEGER)");
+db.run("CREATE TABLE IF NOT EXISTS bass (id TEXT, bass INTEGER)");
+db.run("CREATE TABLE IF NOT EXISTS sunfish (id TEXT, sunfish INTEGER)");
+db.run("CREATE TABLE IF NOT EXISTS sunfishBite (id TEXT, sunfishBite INTEGER)");
+db.run("CREATE TABLE IF NOT EXISTS sturgeon (id TEXT, sturgeon INTEGER)");
+db.run("CREATE TABLE IF NOT EXISTS shark (id TEXT, shark INTEGER)");
+db.run("CREATE TABLE IF NOT EXISTS squid (id TEXT, squid INTEGER)");
 
 client.on("ready", async () => {
 	console.log(`${colors.cyan("[INFO]")} Logged in as ${colors.green(client.user.tag)}`)
@@ -146,6 +163,32 @@ setCooldown = (user, type, cooldown) => {
 				});
 			}
 		});
+	});
+}
+
+
+// TODO: figure out if this actually works, then make the other functions
+checkAndModifyItems = async (user, _type, amount, override) => {
+	// Check if the user exists, if not, add them to the database
+	await db.get(`SELECT * FROM ${_type} WHERE id = '${user.id}'`, async (err, row) => {
+
+		if (err) {
+			console.error(`Smthn went wrong: ${err}`);
+			return false;
+		}
+		if (!row) {
+			await db.run(`INSERT INTO ${_type} (id, ${_type}) VALUES ('${user.id}', ${amount})`);
+			return amount;
+		}
+		if (row) {
+			if (override) {
+				await db.run(`UPDATE ${_type} SET ${_type} = ${amount} WHERE id = '${user.id}'`);
+				return amount;
+			}
+			await db.run(`UPDATE ${_type} SET ${_type} = ${row._type + amount} WHERE id = '${user.id}'`);
+			return row.points + amount;
+		}
+		return false;
 	});
 }
 
@@ -645,8 +688,8 @@ client.on("interactionCreate", async interaction => {
 			coin = Math.random() <= 0.5 ? "heads" : "tails";
 			side = interaction.options.getString("side");
 			outcome = coin == side ? true : false;
-			// If they win, give them the prize, if they lose take up to double the prize away
-			// if they lose inverse the bet and double it
+			// If they win, give them the prize, if they lose take the prize away
+			// if they lose make the bet negative
 			if (!outcome) bet = -bet;
 			await checkAndModifyPoints(interaction.user, bet);
 			setCooldown(interaction.user, "coinflip", config.games.coinflip.cooldown * 60 * 1000) //sanity checks in case they somehow started a coinflip despite having a negative balance
@@ -826,6 +869,43 @@ client.on("interactionCreate", async interaction => {
 				delete wordScrambles[interaction.channel.id];
 			}, 30 * 1000);
 			break;
+	case "handcuff":
+		interaction.reply({
+			embeds: [{
+				title: "Placeholder",
+				description: `This does nothing ${config.games.placeholder}`,
+				color: 0x00ffff
+			}]
+		});
+		break;
+	case "bait":
+		interaction.reply({
+			embeds: [{
+				title: "Placeholder",
+				description: `This does nothing ${config.games.placeholder}`,
+				color: 0x00ffff
+			}]
+		});
+		break;
+	case "bodyguard":
+		interaction.reply({
+			embeds: [{
+				title: "Placeholder",
+				description: `This does nothing ${config.games.placeholder}`,
+				color: 0x00ffff
+			}]
+		});
+		break;
+	case "panhandle":
+		interaction.reply({
+			embeds: [{
+				title: "Placeholder",
+				description: `This does nothing ${config.games.placeholder}`,
+				color: 0x00ffff
+			}]
+		});
+		break;
+
 	};
 });
 
@@ -862,17 +942,17 @@ client.on('messageCreate', async message => {
 		if (curCooldown) {
 			return;
 		}
-		// 1 in 50 chance to start a word scramble
-		if (Math.floor(Math.random() * 25) == 0) {
-			// Start a word scramble
+		// 2.5% chance for scramble
+		if (Math.random < 0.025) {
+			// Start a word scramble and clear any vars set by a forced scramble
 			setCooldown({ id: 0 }, "wordscramble", 5 * 60 * 1000)
 			override = false
-			coinamount = 2
+			coinamount = 1
 			gameData = wordScramble(override);
 			wordScrambles[message.channel.id] = {
 				word: gameData.word,
 				scrambledWord: gameData.scrambledWord,
-				amount: 2,
+				amount: 1,
 				badGuesses: []
 			}
 			message.channel.send({
@@ -936,6 +1016,7 @@ function playGame(gameName) {
 		difference: 0
 	};
 
+	// we know what switch cases are and actually use them, unlike yandev
 	switch (gameName) {
 		case 'FISHING':
 			if (randomNumber < 40) {
