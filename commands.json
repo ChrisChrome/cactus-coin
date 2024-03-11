@@ -233,5 +233,25 @@
 				"required": false
 			}
 		]
+	},
+	{
+		"name": "handcuff",
+		"description": "Does nothing (for now)",
+		"type": 1
+	},
+	{
+		"name": "bait",
+		"description": "Does nothing (for now)",
+		"type": 1
+	},
+	{
+		"name": "bodyguard",
+		"description": "Does nothing (for now)",
+		"type": 1
+	},
+	{
+		"name": "panhandle",
+		"description": "Does nothing (for now)",
+		"type": 1
 	}
 ]
