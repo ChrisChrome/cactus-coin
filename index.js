@@ -458,7 +458,7 @@ client.on("interactionCreate", async interaction => {
 				content: "You do not have permission to use this command.",
 				ephemeral: true
 			});
-			outputStatus = await checkAndModifyPoints(interaction.options.getMember("user").user, interaction.options.get("type").value, interaction.options.getNumber("amount"), interaction.options.getBoolean("override") || false);
+			outputStatus = await checkAndModifyItems(interaction.options.getMember("user").user, interaction.options.get("type").value, interaction.options.getNumber("amount"), interaction.options.getBoolean("override") || false);
 			if (outputStatus !== false) {
 				interaction.reply({
 					content: `Gave ${interaction.options.getMember("user").user.username} ${interaction.options.getNumber("amount")} ${interaction.options.get("type").value}s.`, // Who cares about grammar? This is an admin-only command!
