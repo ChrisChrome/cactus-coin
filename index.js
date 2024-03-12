@@ -305,7 +305,7 @@ client.on("interactionCreate", async interaction => {
 			}
 			interaction.reply({
 				embeds: [{
-					title: header,
+					title: `${user.username}'s Inventory`,
 					description: inv.join("\n"),
 					ephemeral: false,
 					color: 0x00ff00
