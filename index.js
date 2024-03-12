@@ -300,7 +300,7 @@ client.on("interactionCreate", async interaction => {
 				 amount = await checkOwnedItems(interaction.options.getUser("user") || interaction.user, item);
 				_item = item.charAt(0).toUpperCase() + item.slice(1)
 				if (amount != -1) {
-					inv.push(`${_item}${config.game.placeholder}: ${amount}`)
+					inv.push(`${_item}${config.games.placeholder}: ${amount}`)
 				}
 			}
 			interaction.reply({
