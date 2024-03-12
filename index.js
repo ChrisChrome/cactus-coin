@@ -471,6 +471,7 @@ client.on("interactionCreate", async interaction => {
 				}
 				// Send the log to the log channel
 				// Tell the user their items were modified
+				type = interaction.options.get("type").value;
 				interaction.options.getMember("user").user.send({
 					embeds: [{
 						title: "Item Modified",
