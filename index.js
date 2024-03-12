@@ -20,27 +20,17 @@ const client = new Discord.Client({
 // Use sqlite3 for object storage, and create a database if it doesn't exist
 const sqlite3 = require("sqlite3").verbose();
 const db = new sqlite3.Database("./database.db");
-
+const items = require("./items.json")
 // Create table if it doesn't exist
 db.run("CREATE TABLE IF NOT EXISTS points (id TEXT, points INTEGER)");
 db.run("CREATE TABLE IF NOT EXISTS cooldowns (id TEXT, type TEXT, cooldown TEXT)");
-db.run("CREATE TABLE IF NOT EXISTS fpole (id TEXT, fpole INTEGER)");
-db.run("CREATE TABLE IF NOT EXISTS rifle (id TEXT, rifle INTEGER)");
-db.run("CREATE TABLE IF NOT EXISTS shovel (id TEXT, shovel INTEGER)");
-db.run("CREATE TABLE IF NOT EXISTS mine (id TEXT, mine INTEGER)");
-db.run("CREATE TABLE IF NOT EXISTS guard (id TEXT, guard INTEGER)");
-db.run("CREATE TABLE IF NOT EXISTS debit (id TEXT, debit INTEGER)");
-db.run("CREATE TABLE IF NOT EXISTS bait (id TEXT, bait INTEGER)");
-db.run("CREATE TABLE IF NOT EXISTS cuffs (id TEXT, cuffs INTEGER)");
-db.run("CREATE TABLE IF NOT EXISTS minnow (id TEXT, minnow INTEGER)");
-db.run("CREATE TABLE IF NOT EXISTS guppy (id TEXT, guppy INTEGER)");
-db.run("CREATE TABLE IF NOT EXISTS carp (id TEXT, carp INTEGER)");
-db.run("CREATE TABLE IF NOT EXISTS bass (id TEXT, bass INTEGER)");
-db.run("CREATE TABLE IF NOT EXISTS sunfish (id TEXT, sunfish INTEGER)");
-db.run("CREATE TABLE IF NOT EXISTS sunfishBite (id TEXT, sunfishBite INTEGER)");
-db.run("CREATE TABLE IF NOT EXISTS sturgeon (id TEXT, sturgeon INTEGER)");
-db.run("CREATE TABLE IF NOT EXISTS shark (id TEXT, shark INTEGER)");
-db.run("CREATE TABLE IF NOT EXISTS squid (id TEXT, squid INTEGER)");
+
+//This is bad, dumb code that could probably just be individual columns in 1 table. Too bad!
+for (var i=0, l=items.list.all.length; i<l; i++) {
+	var item = items.list.all[i];
+	db.run(`CREATE TABLE IF NOT EXISTS ${item} (id TEXT, ${item} INTEGER)`);
+}
+
 
 client.on("ready", async () => {
 	console.log(`${colors.cyan("[INFO]")} Logged in as ${colors.green(client.user.tag)}`)
@@ -168,27 +158,94 @@ setCooldown = (user, type, cooldown) => {
 
 
 // TODO: figure out if this actually works, then make the other functions
-checkAndModifyItems = async (user, _type, amount, override) => {
+checkAndModifyItems = async (user, type, amount, override) => {
 	// Check if the user exists, if not, add them to the database
-	await db.get(`SELECT * FROM ${_type} WHERE id = '${user.id}'`, async (err, row) => {
+	await db.get(`SELECT * FROM ${type} WHERE id = '${user.id}'`, async (err, row) => {
 
 		if (err) {
 			console.error(`Smthn went wrong: ${err}`);
 			return false;
 		}
 		if (!row) {
-			await db.run(`INSERT INTO ${_type} (id, ${_type}) VALUES ('${user.id}', ${amount})`);
+			await db.run(`INSERT INTO ${type} (id, ${type}) VALUES ('${user.id}', ${amount})`);
 			return amount;
 		}
 		if (row) {
 			if (override) {
-				await db.run(`UPDATE ${_type} SET ${_type} = ${amount} WHERE id = '${user.id}'`);
+				await db.run(`UPDATE ${type} SET ${type} = ${amount} WHERE id = '${user.id}'`);
 				return amount;
 			}
-			await db.run(`UPDATE ${_type} SET ${_type} = ${row._type + amount} WHERE id = '${user.id}'`);
-			return row.points + amount;
+			await db.run(`UPDATE ${type} SET ${type} = ${row[type] + amount} WHERE id = '${user.id}'`);
+			return row[type] + amount;
 		}
 		return false;
+	});
+}
+
+checkAndModifyAllItems = async (user, amount, override) => {
+	// Check if the user exists, if not, add them to the database
+	for (var i=0, l=items.list.all.length; i<l; i++) {
+		var item = items.list.all[i];
+		await db.get(`SELECT * FROM ${item} WHERE id = '${user.id}'`, async (err, row) => {
+			if (err) {
+				console.error(`Smthn went wrong: ${err}`);
+				return false;
+			}
+			if (!row) {
+				await db.run(`INSERT INTO ${item} (id, ${item}) VALUES ('${user.id}', ${amount})`);
+				return amount;
+			}
+			if (row) {
+				if (override) {
+					await db.run(`UPDATE ${item} SET ${item} = ${amount} WHERE id = '${user.id}'`);
+					return amount;
+				}
+				await db.run(`UPDATE ${item} SET ${item} = ${row[item] + amount} WHERE id = '${user.id}'`);
+				return row[item] + amount;
+			}
+			return false;
+		});
+	}
+}
+
+checkItems = (user, type) => {
+	// Needs to be awaited
+	return new Promise((resolve, reject) => {
+		db.get(`SELECT * FROM ${type} WHERE id = '${user.id}'`, async (err, row) => {
+			if (err) {
+				console.error(`Something went wrong: ${err}`);
+				reject(err);
+			}
+			if (!row) {
+				await db.run(`INSERT INTO ${type} (id, ${type}) VALUES ('${user.id}', 0)`);
+				resolve(0);
+			}
+			if (row) {
+				resolve(row[type]);
+			}
+		});
+	});
+}
+
+checkAllItems = (user) => {
+	// Needs to be awaited
+	return new Promise((resolve, reject) => {
+		for (var i=0, l=items.list.all.length; i<l; i++) {
+			var item = items.list.all[i];
+			db.get(`SELECT * FROM ${item} WHERE id = '${user.id}'`, async (err, row) => {
+				if (err) {
+					console.error(`Something went wrong: ${err}`);
+					reject(err);
+				}
+				if (!row) {
+					await db.run(`INSERT INTO ${item} (id, ${item}) VALUES ('${user.id}', 0)`);
+					resolve(0);
+				}
+				if (row) {
+					resolve(row[item]);
+				}
+			});
+		}
 	});
 }
 
@@ -395,6 +452,77 @@ client.on("interactionCreate", async interaction => {
 			});
 			break;
 
+		case "moditem":
+			// check if the user is in the config.discord.givers array
+			if (!config.discord.givers.includes(interaction.user.id)) return interaction.reply({
+				content: "You do not have permission to use this command.",
+				ephemeral: true
+			});
+			outputStatus = await checkAndModifyPoints(interaction.options.getMember("user").user, interaction.options.get("type").value, interaction.options.getNumber("amount"), interaction.options.getBoolean("override") || false);
+			if (outputStatus !== false) {
+				interaction.reply({
+					content: `Gave ${interaction.options.getMember("user").user.username} ${interaction.options.getNumber("amount")} ${interaction.options.get("type").value}s.`, // Who cares about grammar? This is an admin-only command!
+					ephemeral: true
+				});
+				// add + or - to the amount
+				amount = interaction.options.getNumber("amount");
+				if (amount > 0) {
+					amount = `+${amount}`;
+				}
+				// Send the log to the log channel
+				// Tell the user their items were modified
+				interaction.options.getMember("user").user.send({
+					embeds: [{
+						title: "Item Modified",
+						description: `${config.games.placeholder}${type}: ${amount}`,
+						color: 0xFFff00
+					}]
+				}).catch(err => { });
+			
+			
+			} else {
+				interaction.reply({
+					content: `An error occurred.\n`,
+					ephemeral: true
+				});
+			}
+			break;
+				
+		case "modallitem":
+			// check if the user is in the config.discord.givers array
+			if (!config.discord.givers.includes(interaction.user.id)) return interaction.reply({
+				content: "You do not have permission to use this command.",
+				ephemeral: true
+			});
+			outputStatus = await checkAndModifyPoints(interaction.options.getMember("user").user, interaction.options.getNumber("amount"), interaction.options.getBoolean("override") || false);
+			if (outputStatus !== false) {
+				interaction.reply({
+					content: `Gave ${interaction.options.getMember("user").user.username} ${interaction.options.getNumber("amount")} of all items.`,
+					ephemeral: true
+				});
+				// add + or - to the amount
+				amount = interaction.options.getNumber("amount");
+				if (amount > 0) {
+					amount = `+${amount}`;
+				}
+				// Send the log to the log channel
+				// Tell the user their items were modified
+				interaction.options.getMember("user").user.send({
+					embeds: [{
+						title: "Items Modified",
+						description: `All items${config.games.placeholder}: ${amount}`,
+						color: 0xFFff00
+					}]
+				}).catch(err => { });
+	
+	
+			} else {
+				interaction.reply({
+					content: `An error occurred.\n`,
+					ephemeral: true
+				});
+			}
+			break;
 		case "transfer": // Allows a user to transfer a positive amount of coins to another user at a 50% tax, rounded down, if the user sends 2 coins, the other user will receive 1, the other gets sent to the abyss.
 			// check if the arguments are there
 			if (!interaction.options.getMember("user")) return interaction.reply({

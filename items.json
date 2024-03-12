@@ -1,0 +1,60 @@
+{
+    "list": {
+        "all": [
+            "fpole",
+            "rifle",
+            "shovel",
+            "box",
+            "mine",
+            "guard",
+            "debit",
+            "bait",
+            "cuffs",
+            "minnow",
+            "guppy",
+            "carp",
+            "bass",
+            "sunfish",
+            "sunfishBite",
+            "sturgeon",
+            "shark",
+            "squid",
+            "pebble",
+            "worm",
+            "stick",
+            "grub",
+            "wire",
+            "skull"
+        ],
+        "usable": [
+            "fpole",
+            "rifle",
+            "shovel",
+            "box",
+            "mine",
+            "guard",
+            "debit",
+            "bait",
+            "cuffs"
+        ],
+        "fishing": [
+            "minnow",
+            "guppy",
+            "carp",
+            "bass",
+            "sunfish",
+            "sunfishBite",
+            "sturgeon",
+            "shark",
+            "squid"
+        ],
+        "digging": [
+            "pebble",
+            "worm",
+            "stick",
+            "grub",
+            "wire",
+            "skull"
+        ]
+    }
+}

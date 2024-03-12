@@ -253,5 +253,61 @@
 		"name": "panhandle",
 		"description": "Does nothing (for now)",
 		"type": 1
+	},
+	{
+		"name": "moditems",
+		"description": "Modify a user's items",
+		"type": 1,
+		"options": [
+			{
+				"name": "user",
+				"description": "The user to modify",
+				"type": 6,
+				"required": true
+			},
+			{
+				"name": "type",
+				"description": "The item to modify",
+				"type": 3,
+				"required": true
+			},
+			{
+				"name": "amount",
+				"description": "The amount to modify (can be negative)",
+				"type": 10,
+				"required": true
+			},
+			{
+				"name": "override",
+				"description": "Override their item with the amount given instead of adding to it",
+				"type": 5,
+				"required": false
+			}
+		]
+	},
+	{
+		"name": "modallitems",
+		"description": "Modify all of a user's items",
+		"type": 1,
+		"options": [
+			{
+				"name": "user",
+				"description": "The user to modify",
+				"type": 6,
+				"required": true
+			},
+			{
+				"name": "amount",
+				"description": "The amount to modify (can be negative)",
+				"type": 10,
+				"required": true
+			},
+			{
+				"name": "override",
+				"description": "Override their items with the amount given instead of adding to it",
+				"type": 5,
+				"required": false
+			}
+		]
 	}
 ]
