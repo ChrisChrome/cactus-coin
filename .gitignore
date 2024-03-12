@@ -137,3 +137,4 @@ database.db
 config.json
 config.json.*
 !config.json.disabled
+.vscode/settings.json
