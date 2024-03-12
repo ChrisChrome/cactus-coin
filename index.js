@@ -452,7 +452,7 @@ client.on("interactionCreate", async interaction => {
 			});
 			break;
 
-		case "moditem":
+		case "moditems":
 			// check if the user is in the config.discord.givers array
 			if (!config.discord.givers.includes(interaction.user.id)) return interaction.reply({
 				content: "You do not have permission to use this command.",
