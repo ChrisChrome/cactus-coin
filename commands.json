@@ -309,5 +309,18 @@
 				"required": false
 			}
 		]
+	},
+	{
+		"name": "inventory",
+		"description": "Check the inventory of yourself or another user",
+		"type": 1,
+		"options": [
+			{
+				"name": "user",
+				"description": "The user to check",
+				"type": 6,
+				"required": false
+			}
+		]
 	}
 ]

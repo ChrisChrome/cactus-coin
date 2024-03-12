@@ -227,6 +227,31 @@ checkItems = (user, type) => {
 	});
 }
 
+//If the user has 0 of that item, then we will return -1 to indicate as such
+checkOwnedItems = (user, type) => {
+	// Needs to be awaited
+	return new Promise((resolve, reject) => {
+		db.get(`SELECT * FROM ${type} WHERE id = '${user.id}'`, async (err, row) => {
+			if (err) {
+				console.error(`Something went wrong: ${err}`);
+				reject(err);
+			}
+			if (!row) {
+				await db.run(`INSERT INTO ${type} (id, ${type}) VALUES ('${user.id}', 0)`);
+				resolve(-1);
+			}
+			if (row) {
+				if (row[type] > 0) {
+					resolve(row[type]);
+				} else {
+					resolve(-1);
+				}
+			}
+		});
+	});
+}
+
+//TODO: I don't think this code actually works the way i want it to, do better next time sleep deprived me
 checkAllItems = (user) => {
 	// Needs to be awaited
 	return new Promise((resolve, reject) => {
@@ -239,7 +264,7 @@ checkAllItems = (user) => {
 				}
 				if (!row) {
 					await db.run(`INSERT INTO ${item} (id, ${item}) VALUES ('${user.id}', 0)`);
-					resolve(0);
+					return;
 				}
 				if (row) {
 					resolve(row[item]);
@@ -265,6 +290,29 @@ client.on("interactionCreate", async interaction => {
 				}]
 			});
 			break;
+
+		case "inventory":
+			// Get user data
+			inv = [];
+			for (var i=0, l=items.list.all.length; i<l; i++) {
+				var item = items.list.all[i];
+				user = interaction.options.getUser("user") || interaction.user;
+				 amount = await checkOwnedItems(interaction.options.getUser("user") || interaction.user, item);
+				_item = item.charAt(0).toUpperCase() + item.slice(1)
+				if (amount != -1) {
+					inv.push(`${_item}${config.game.placeholder}: ${amount}`)
+				}
+			}
+			interaction.reply({
+				embeds: [{
+					title: header,
+					description: inv.join("\n"),
+					ephemeral: false,
+					color: 0x00ff00
+				}]
+			});
+			break;
+		
 		case "leaderboard":
 			// Get the type option, if its "inverted" then order by points ASC, if its not set then order by points DESC
 			type = interaction.options.getString("type") || "DESC";
