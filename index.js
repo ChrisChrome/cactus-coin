@@ -720,7 +720,7 @@ client.on("interactionCreate", async interaction => {
 			await checkAndModifyPoints(interaction.user, result.difference);
 			interaction.reply(result.string);
 			break;
-		case "slots": // Play some slots, 1 minute cooldown
+		case "slots": // Play some slots, 30 second cooldown
 			curCooldown = await checkCooldown(interaction.user, "slots")
 			if (curCooldown) {
 				return interaction.reply({
@@ -740,9 +740,9 @@ client.on("interactionCreate", async interaction => {
 			slotResults[interaction.user.id] = playSlotMachine();
 			// If there is a slotResults[interaction.user.id].cooldownOverride use that instead
 			if (slotResults[interaction.user.id].cooldownOverride) {
-				setCooldown(interaction.user, "slots", slotResults[interaction.user.id].cooldownOverride * 60 * 1000)
+				setCooldown(interaction.user, "slots", slotResults[interaction.user.id].cooldownOverride * 30 * 1000)
 			} else {
-				setCooldown(interaction.user, "slots", config.games.slots.cooldown * 60 * 1000)
+				setCooldown(interaction.user, "slots", config.games.slots.cooldown * 30 * 1000)
 			}
 			await interaction.reply({
 				embeds: [{
