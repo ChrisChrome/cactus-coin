@@ -299,7 +299,7 @@ client.on("interactionCreate", async interaction => {
 				user = interaction.options.getUser("user") || interaction.user;
 				 amount = await checkOwnedItems(interaction.options.getUser("user") || interaction.user, item);
 				_item = item.charAt(0).toUpperCase() + item.slice(1)
-				if (amount != -1) {
+				if (amount >  0) {
 					inv.push(`${config.items[item]} ${_item}: ${amount}`)
 				}
 			}
