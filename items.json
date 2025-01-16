@@ -37,6 +37,9 @@
             "bait",
             "cuffs"
         ],
+        "special": [
+            "mine"
+        ],
         "fishing": [
             "minnow",
             "guppy",
